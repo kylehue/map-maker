@@ -1,30 +1,49 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+   <div class="flex flex-col w-screen h-screen">
+      <div class="navbar flex w-screen h-12 flex-shrink-0 items-center px-6">
+         <n-menu
+            v-model:value="mainNavActiveKey"
+            mode="horizontal"
+            :options="navOptions"
+            responsive
+         />
+      </div>
+      <div class="body flex w-screen h-full">
+         <div class="flex flex-col absolute">
+            
+         </div>
+      </div>
+   </div>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+<script setup lang="ts">
+import { MenuOption, NMenu, useThemeVars } from "naive-ui";
+import { ref } from "vue";
+
+const theme = useThemeVars();
+
+const mainNavActiveKey = ref();
+const navOptions: MenuOption[] = [
+   {
+      key: "file",
+      label: "File",
+      children: [
+         {
+            key: "import",
+            label: "Merge files",
+         },
+      ],
+   },
+];
+</script>
+
+<style lang="scss" scoped>
+.navbar {
+   background-color: v-bind("theme.cardColor");
+   border-bottom: 1px solid v-bind("theme.dividerColor");
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.body {
+   background-color: v-bind("theme.bodyColor");
 }
 </style>
