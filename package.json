@@ -12,11 +12,15 @@
       "vue": "^3.4.21"
    },
    "devDependencies": {
+      "@phosphor-icons/vue": "^2.1.6",
+      "@types/splitpanes": "^2.2.6",
       "@vitejs/plugin-vue": "^5.0.4",
+      "@vueuse/core": "^10.9.0",
       "autoprefixer": "^10.4.18",
       "naive-ui": "^2.38.1",
       "postcss": "^8.4.35",
       "sass": "^1.71.1",
+      "splitpanes": "^3.1.5",
       "tailwindcss": "^3.4.1",
       "typescript": "^5.2.2",
       "vite": "^5.1.6",

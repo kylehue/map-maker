@@ -1,40 +1,48 @@
 <template>
    <div class="flex flex-col w-screen h-screen">
-      <div class="navbar flex w-screen h-12 flex-shrink-0 items-center px-6">
-         <n-menu
-            v-model:value="mainNavActiveKey"
-            mode="horizontal"
-            :options="navOptions"
-            responsive
-         />
+      <div class="navbar flex w-screen h-10 flex-shrink-0 items-center">
+         <navbar></navbar>
       </div>
-      <div class="body flex w-screen h-full">
-         <div class="flex flex-col absolute">
-            
+      <div class="body flex flex-auto">
+         <div class="flex flex-col flex-auto w-full">
+            <Splitpanes>
+               <Pane class="min-w-5 overflow-hidden" :size="60">
+                  <DesignArea></DesignArea>
+               </Pane>
+               <Pane class="min-w-5 overflow-hidden" :size="40">
+                  <Splitpanes horizontal>
+                     <Pane
+                        v-if="settingsStore.window.showMatrix"
+                        class="min-h-5 overflow-hidden"
+                        :size="50"
+                     >
+                        <MatrixArea></MatrixArea>
+                     </Pane>
+                     <Pane
+                        v-if="settingsStore.window.showMaterials"
+                        class="min-h-5 overflow-hidden"
+                        :size="50"
+                     >
+                        <MaterialArea></MaterialArea>
+                     </Pane>
+                  </Splitpanes>
+               </Pane>
+            </Splitpanes>
          </div>
       </div>
    </div>
 </template>
 
 <script setup lang="ts">
-import { MenuOption, NMenu, useThemeVars } from "naive-ui";
-import { ref } from "vue";
+import { Splitpanes, Pane } from "splitpanes";
+import { useThemeVars } from "naive-ui";
+import navbar from "./panes/navbar.vue";
+import DesignArea from "./panes/design-area/index.vue";
+import MaterialArea from "./panes/material-area.vue";
+import MatrixArea from "./panes/matrix-area/index.vue";
+import { settingsStore } from "./store/settings";
 
 const theme = useThemeVars();
-
-const mainNavActiveKey = ref();
-const navOptions: MenuOption[] = [
-   {
-      key: "file",
-      label: "File",
-      children: [
-         {
-            key: "import",
-            label: "Merge files",
-         },
-      ],
-   },
-];
 </script>
 
 <style lang="scss" scoped>
@@ -46,4 +54,4 @@ const navOptions: MenuOption[] = [
 .body {
    background-color: v-bind("theme.bodyColor");
 }
-</style>
+</style>./panes/matrix-area/index.vue
