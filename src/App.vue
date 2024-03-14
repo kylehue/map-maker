@@ -11,13 +11,13 @@
                   <DesignArea></DesignArea>
                </Pane>
                <Pane class="min-w-5 overflow-hidden" :size="40">
-                  <Splitpanes horizontal>
+                  <Splitpanes class="flex flex-col h-full" horizontal>
                      <Pane
                         v-if="settingsStore.window.showMatrix"
-                        class="min-h-5 overflow-hidden"
-                        :size="50"
+                        class="relative flex-grow min-h-5 overflow-hidden"
+                        :size="70"
                      >
-                        <div class="flex flex-col w-full h-full">
+                        <div class="flex flex-col w-full h-full absolute">
                            <NTabs
                               size="small"
                               type="segment"
@@ -35,10 +35,12 @@
                      </Pane>
                      <Pane
                         v-if="settingsStore.window.showMaterials"
-                        class="min-h-5 overflow-hidden"
-                        :size="50"
+                        class="relative flex-grow min-h-5 overflow-hidden"
+                        :size="30"
                      >
-                        <LayerArea></LayerArea>
+                        <div class="flex flex-col w-full h-full absolute">
+                           <LayerArea></LayerArea>
+                        </div>
                      </Pane>
                   </Splitpanes>
                </Pane>
@@ -63,6 +65,15 @@ const theme = useThemeVars();
 </script>
 
 <style lang="scss" scoped>
+:deep(.n-tabs),
+:deep(.n-tabs-pane-wrapper),
+:deep(.n-tab-pane) {
+   width: 100%;
+   height: 100%;
+   padding: 0 !important;
+   margin: 0 !important;
+}
+
 .navbar {
    background-color: v-bind("theme.cardColor");
    border-bottom: 1px solid v-bind("theme.dividerColor");

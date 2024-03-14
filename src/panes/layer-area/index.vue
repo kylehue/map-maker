@@ -6,7 +6,7 @@
       <div
          class="layer-area flex flex-col flex-auto items-start p-2 overflow-auto"
       >
-         <template v-for="i in 10">
+         <template v-for="i in 50">
             <Layer :name="'Layer ' + i"></Layer>
          </template>
       </div>
