@@ -161,6 +161,7 @@ watch(isEditingLayerNameInput, (isEditingLayer) => {
 }
 
 .layer-name-input {
+   color: v-bind("theme.textColor1") !important;
    border: none;
    outline: none;
    background: none;

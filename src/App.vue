@@ -7,10 +7,10 @@
       <div class="body flex flex-auto">
          <div class="flex flex-col flex-auto w-full">
             <Splitpanes>
-               <Pane class="min-w-5 overflow-hidden" :size="60">
+               <Pane class="min-w-5 overflow-hidden" :size="70">
                   <DesignArea></DesignArea>
                </Pane>
-               <Pane class="min-w-5 overflow-hidden" :size="40">
+               <Pane class="min-w-5 overflow-hidden" :size="30">
                   <Splitpanes class="flex flex-col h-full" horizontal>
                      <Pane
                         v-if="settingsStore.window.showMatrix"

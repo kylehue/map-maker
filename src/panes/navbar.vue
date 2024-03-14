@@ -1,20 +1,24 @@
 <template>
-   <n-menu
-      v-model:value="navActiveKey"
-      mode="horizontal"
-      :options="navOptions"
-      responsive
-      dropdown-placement="top-start"
-      :dropdown-props="{
-         arrowPointToCenter: true,
-         showArrow: true,
-      }"
-   />
+   <div class="flex items-center justify-between w-full pr-4">
+      <NMenu
+         v-model:value="navActiveKey"
+         mode="horizontal"
+         :options="navOptions"
+         responsive
+         dropdown-placement="top-start"
+         :dropdown-props="{
+            arrowPointToCenter: true,
+            showArrow: true,
+         }"
+      />
+      <ThemeSwitcher></ThemeSwitcher>
+   </div>
 </template>
 
 <script setup lang="ts">
 import { MenuOption, NMenu } from "naive-ui";
 import { reactive, ref, watch } from "vue";
+import ThemeSwitcher from "../components/theme-switcher.vue";
 
 enum Navigation {
    FILE_DROPDOWN,
