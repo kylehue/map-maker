@@ -30,6 +30,8 @@ enum Navigation {
    WINDOW_SHOW_MATRIX,
    WINDOW_SHOW_MATERIALS,
    WINDOW_SHOW_LAYERS,
+   UNDO,
+   REDO,
    EDIT_TILE_SIZE,
 }
 
@@ -57,6 +59,14 @@ const navOptions: MenuOption[] = [
       key: Navigation.EDIT_DROPDOWN,
       label: "Edit",
       children: [
+         {
+            key: Navigation.UNDO,
+            label: "Undo",
+         },
+         {
+            key: Navigation.REDO,
+            label: "Redo",
+         },
          {
             key: Navigation.EDIT_TILE_SIZE,
             label: "Change tile size",

@@ -13,17 +13,21 @@ import { currentTheme } from "./composables/use-theme-switch";
 import { ref, watch } from "vue";
 
 const themeToUse = ref<BuiltInGlobalTheme>(darkTheme);
-watch(currentTheme, (currentTheme) => {
-   if (currentTheme == "dark") {
-      themeToUse.value = darkTheme;
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-   } else {
-      themeToUse.value = lightTheme;
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-   }
-});
+watch(
+   currentTheme,
+   (currentTheme) => {
+      if (currentTheme == "dark") {
+         themeToUse.value = darkTheme;
+         document.documentElement.classList.add("dark");
+         document.documentElement.classList.remove("light");
+      } else {
+         themeToUse.value = lightTheme;
+         document.documentElement.classList.add("light");
+         document.documentElement.classList.remove("dark");
+      }
+   },
+   { immediate: true }
+);
 </script>
 
 <style scoped></style>
