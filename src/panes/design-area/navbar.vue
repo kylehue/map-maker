@@ -26,6 +26,11 @@
             mode="horizontal"
             :options="navOptions"
             responsive
+            dropdown-placement="top-start"
+            :dropdown-props="{
+               arrowPointToCenter: true,
+               showArrow: true,
+            }"
          />
       </div>
       <div class="flex items-center">

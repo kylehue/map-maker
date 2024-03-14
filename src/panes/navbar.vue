@@ -4,6 +4,11 @@
       mode="horizontal"
       :options="navOptions"
       responsive
+      dropdown-placement="top-start"
+      :dropdown-props="{
+         arrowPointToCenter: true,
+         showArrow: true,
+      }"
    />
 </template>
 
@@ -14,11 +19,14 @@ import { reactive, ref, watch } from "vue";
 enum Navigation {
    FILE_DROPDOWN,
    WINDOW_DROPDOWN,
+   EDIT_DROPDOWN,
    NEW_PROJECT,
    OPEN_FILES,
    EXPORT,
    WINDOW_SHOW_MATRIX,
    WINDOW_SHOW_MATERIALS,
+   WINDOW_SHOW_LAYERS,
+   EDIT_TILE_SIZE,
 }
 
 const navActiveKey = ref<Navigation>();
@@ -42,16 +50,30 @@ const navOptions: MenuOption[] = [
       ],
    },
    {
+      key: Navigation.EDIT_DROPDOWN,
+      label: "Edit",
+      children: [
+         {
+            key: Navigation.EDIT_TILE_SIZE,
+            label: "Change tile size",
+         },
+      ],
+   },
+   {
       key: Navigation.WINDOW_DROPDOWN,
       label: "Window",
       children: [
          {
             key: Navigation.WINDOW_SHOW_MATRIX,
-            label: "Map Matrix",
+            label: "Matrix",
          },
          {
             key: Navigation.WINDOW_SHOW_MATERIALS,
             label: "Materials",
+         },
+         {
+            key: Navigation.WINDOW_SHOW_LAYERS,
+            label: "Layers",
          },
       ],
    },

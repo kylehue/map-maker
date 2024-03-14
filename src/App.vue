@@ -1,4 +1,5 @@
 <template>
+   <ContextMenu></ContextMenu>
    <div class="flex flex-col w-screen h-screen">
       <div class="navbar flex w-screen h-10 flex-shrink-0 items-center">
          <navbar></navbar>
@@ -16,14 +17,28 @@
                         class="min-h-5 overflow-hidden"
                         :size="50"
                      >
-                        <MatrixArea></MatrixArea>
+                        <div class="flex flex-col w-full h-full">
+                           <NTabs
+                              size="small"
+                              type="segment"
+                              animated
+                              class="*:!text-xs border-t-0"
+                           >
+                              <NTabPane name="1" tab="Materials">
+                                 <MaterialArea></MaterialArea>
+                              </NTabPane>
+                              <NTabPane name="2" tab="Matrix">
+                                 <MatrixArea></MatrixArea>
+                              </NTabPane>
+                           </NTabs>
+                        </div>
                      </Pane>
                      <Pane
                         v-if="settingsStore.window.showMaterials"
                         class="min-h-5 overflow-hidden"
                         :size="50"
                      >
-                        <MaterialArea></MaterialArea>
+                        <LayerArea></LayerArea>
                      </Pane>
                   </Splitpanes>
                </Pane>
@@ -35,12 +50,14 @@
 
 <script setup lang="ts">
 import { Splitpanes, Pane } from "splitpanes";
-import { useThemeVars } from "naive-ui";
+import { useThemeVars, NTabs, NTabPane } from "naive-ui";
 import navbar from "./panes/navbar.vue";
 import DesignArea from "./panes/design-area/index.vue";
-import MaterialArea from "./panes/material-area.vue";
+import MaterialArea from "./panes/material-area/index.vue";
 import MatrixArea from "./panes/matrix-area/index.vue";
+import LayerArea from "./panes/layer-area/index.vue";
 import { settingsStore } from "./store/settings";
+import ContextMenu from "./components/context-menu.vue";
 
 const theme = useThemeVars();
 </script>
@@ -54,4 +71,4 @@ const theme = useThemeVars();
 .body {
    background-color: v-bind("theme.bodyColor");
 }
-</style>./panes/matrix-area/index.vue
+</style>
