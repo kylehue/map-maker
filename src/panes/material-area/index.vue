@@ -31,15 +31,13 @@
          </NUpload>
       </template>
       <template v-else>
-         <div
-            class="material-navbar flex w-full h-8 flex-shrink-0 items-center"
-         >
-            <Navbar />
+         <div class="material-navbar flex w-full flex-shrink-0 items-center">
+            <Navbar @search="(e) => (searchMaterialText = e)" />
          </div>
          <div
             class="material-area flex flex-wrap flex-auto items-start p-2 overflow-auto"
          >
-            <template v-for="material in projectStore.materials">
+            <template v-for="material in materialsComputed" :key="material.id">
                <Material :material="material"></Material>
             </template>
          </div>
@@ -59,20 +57,29 @@ import {
    useThemeVars,
    UploadProps,
 } from "naive-ui";
-import { onMounted, reactive, ref, watch } from "vue";
+import { onMounted, computed, ref, watch } from "vue";
 import { PhUpload } from "@phosphor-icons/vue";
 import Navbar from "./navbar.vue";
 import Material from "./material-item.vue";
 import { useProjectStore } from "../../store/project";
+import { loadImage } from "../../utils/material-utils";
 type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
 
 const projectStore = useProjectStore();
 const theme = useThemeVars();
 const containerRef = ref<HTMLDivElement>();
 const isDragAndDropping = ref(false);
+const searchMaterialText = ref("");
+const materialsComputed = computed(() =>
+   projectStore.searchMaterial(searchMaterialText.value)
+);
 
 function handleFileUpload(data: FileUploadData) {
-   // TODO: add to materials
+   if (!data.file.fullPath) return;
+   const url = URL.createObjectURL(data.file.file!);
+   loadImage(url).then((e) => {
+      projectStore.createMaterial(data.file.fullPath!, e);
+   });
 }
 
 onMounted(() => {
@@ -110,4 +117,4 @@ addEventListener("drop", () => {
 .material-area {
    background: v-bind("theme.cardColor");
 }
-</style>../../components/material-item.vue
+</style>

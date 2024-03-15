@@ -14,7 +14,11 @@
          >
             <div class="relative flex flex-col w-full h-full overflow-hidden">
                <div class="flex flex-row w-fit z-10">
-                  <NInput placeholder="Search" clearable>
+                  <NInput
+                     placeholder="Search"
+                     clearable
+                     v-model:value="searchMaterialText"
+                  >
                      <template #prefix>
                         <NIcon>
                            <PhMagnifyingGlass />
@@ -22,10 +26,16 @@
                      </template>
                   </NInput>
                </div>
-               <div class="flex flex-col absolute overflow-auto w-full h-full pt-16">
-                  <NCollapse class="flex flex-col overflow-auto h-full">
-                     <template v-for="i in 20">
-                        <MaterialManagerItem></MaterialManagerItem>
+               <div
+                  class="flex flex-col absolute overflow-auto w-full h-full pt-16"
+               >
+                  <NCollapse class="flex flex-col overflow-auto h-full px-4">
+                     <template
+                        v-for="material in materialsComputed"
+                        :key="material.id"
+                     >
+                        <MaterialManagerItem :material="material">
+                        </MaterialManagerItem>
                      </template>
                   </NCollapse>
                </div>
@@ -40,6 +50,15 @@ import { NCard, NInput, NCollapse, NIcon } from "naive-ui";
 import { isMaterialManagerVisible } from "../composables/use-material-manager";
 import { PhMagnifyingGlass } from "@phosphor-icons/vue";
 import MaterialManagerItem from "./material-manager-item.vue";
+import { useProjectStore } from "../store/project";
+import { computed, ref, watch } from "vue";
+
+const projectStore = useProjectStore();
+const searchMaterialText = ref("");
+
+const materialsComputed = computed(() =>
+   projectStore.searchMaterial(searchMaterialText.value)
+);
 </script>
 
 <style scoped lang="scss">

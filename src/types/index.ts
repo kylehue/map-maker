@@ -7,23 +7,17 @@ export interface Project {
    selectedMaterial?: Material;
 }
 
-export type MaterialRotation =
-   | "90"
-   | "180"
-   | "270"
-   | "-90"
-   | "-180"
-   | "-270"
-   | "0";
+export type MaterialRotation = 90 | 180 | -90 | -180 | 0;
 
 export interface Material {
    id: string;
-   filename: string;
+   name: string;
    imageSrc: string;
    matrixId: string;
    rotation: MaterialRotation;
    isHorizontallyFlipped: boolean;
    isVerticallyFlipped: boolean;
+   image: HTMLImageElement;
 }
 
 export interface Layer {
