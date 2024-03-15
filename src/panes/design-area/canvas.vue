@@ -4,22 +4,22 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from "vue";
-import { Designer } from "../../designer/Designer";
 import { useElementSize } from "@vueuse/core";
-import { map } from "../../utils/map";
+import { useDesignerStore } from "../../store/designer";
 
 const canvasContainer = ref<HTMLDivElement>();
 const canvasContainerSize = useElementSize(canvasContainer);
-const designer = new Designer();
+const designerStore = useDesignerStore();
 
 watch(
    () => [canvasContainerSize.width.value, canvasContainerSize.height.value],
    ([width, height]) => {
-      designer.setSize(width, height);
+      if (!designerStore.designer) return;
+      designerStore.designer.setSize(width, height);
    }
 );
 
 onMounted(() => {
-   canvasContainer.value?.appendChild(designer.canvas);
+   canvasContainer.value?.appendChild(designerStore.designer!.canvas);
 });
 </script>

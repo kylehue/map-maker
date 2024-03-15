@@ -7,8 +7,10 @@
          <div class="design-navbar flex w-full h-8 flex-shrink-0 items-center">
             <Navbar></Navbar>
          </div>
-         <div class="design-area flex flex-auto">
-            <Canvas class="canvas"></Canvas>
+         <div class="design-area relative w-full h-full">
+            <div class="absolute w-full h-full">
+               <Canvas class="canvas"></Canvas>
+            </div>
          </div>
       </div>
    </div>

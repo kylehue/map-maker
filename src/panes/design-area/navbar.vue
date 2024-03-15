@@ -144,9 +144,11 @@ function moveDesigner(x: number, y: number) {
    const position = designerStore.position;
    position.x += -x * 2;
    position.y += -y * 2;
+   designerStore.designer?.setFPS(60);
 }
 
 function zoomDesigner(x: number, y: number) {
    designerStore.addZoom(-(x + y) * 4);
+   designerStore.designer?.setFPS(60);
 }
 </script>

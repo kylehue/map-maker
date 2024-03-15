@@ -13,6 +13,8 @@ export class Designer {
    private readonly camera = new Camera(this.context);
    private readonly designerStore = useDesignerStore();
    private readonly projectStore = useProjectStore();
+   private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
+   private fps = 50;
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
@@ -23,25 +25,56 @@ export class Designer {
    constructor() {
       this.context.imageSmoothingEnabled = false;
 
-      const test = () => {
-         requestAnimationFrame(test);
+      const tick = () => {
          this.repaint();
+         setTimeout(() => {
+            requestAnimationFrame(tick);
+         }, 1000 / this.fps);
       };
+      tick();
+      
+      addEventListener("resize", () => {
+         this.canvasBounds = this.canvas.getBoundingClientRect();
+      });
 
-      test();
+      this.canvas.addEventListener("mouseenter", (e) => {
+         this.fps = 50;
+         this.repaint();
+      });
+
+      this.canvas.addEventListener("mouseleave", (e) => {
+         this.fps = 4;
+         this.repaint();
+      });
+
+      this.repaint();
+   }
+
+   public setFPS(fps: number) {
+      this.fps = fps;
    }
 
    public setSize(width: number, height: number) {
       this.canvas.width = width;
       this.canvas.height = height;
+      this.canvasBounds = this.canvas.getBoundingClientRect();
+
+      this.repaint();
    }
 
    public getMouse() {
       let { x, y } = this.camera.screenToWorld(
-         mouseX.value - this.canvas.offsetLeft,
-         mouseY.value - this.canvas.offsetTop
+         mouseX.value - this.canvasBounds.left,
+         mouseY.value - this.canvasBounds.top
       );
       return { x, y };
+   }
+
+   public getMouseColumnRow() {
+      const { x, y } = this.getMouse();
+      const col = Math.floor(x / this.projectStore.tileSize);
+      const row = Math.floor(y / this.projectStore.tileSize);
+      return [col, row];
    }
 
    private drawTiles() {
