@@ -1,5 +1,5 @@
 <template>
-   <div class="flex items-center justify-between w-full pr-4">
+   <div class="flex items-center justify-between w-full px-8">
       <NMenu
          v-model:value="navActiveKey"
          mode="horizontal"

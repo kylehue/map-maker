@@ -3,7 +3,7 @@
    <ContextMenu></ContextMenu>
    <div class="flex flex-col w-screen h-screen">
       <div class="navbar flex w-screen h-10 flex-shrink-0 items-center">
-         <navbar></navbar>
+         <Navbar></Navbar>
       </div>
       <div class="body flex flex-auto">
          <div class="flex flex-col flex-auto w-full">
@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { Splitpanes, Pane } from "splitpanes";
 import { useThemeVars, NTabs, NTabPane } from "naive-ui";
-import navbar from "./panes/navbar.vue";
+import Navbar from "./panes/navbar.vue";
 import DesignArea from "./panes/design-area/index.vue";
 import MaterialArea from "./panes/material-area/index.vue";
 import MatrixArea from "./panes/matrix-area/index.vue";

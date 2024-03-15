@@ -1,10 +1,15 @@
 <template>
-   <div class="flex flex-col w-full h-full">
-      <div class="design-navbar flex w-full h-8 flex-shrink-0 items-center">
-         <Navbar></Navbar>
+   <div class="flex w-full h-full">
+      <div class="toolbar flex w-fit justify-center">
+         <Toolbar></Toolbar>
       </div>
-      <div class="design-area flex flex-auto">
-         <Canvas></Canvas>
+      <div class="flex flex-col w-full h-full">
+         <div class="design-navbar flex w-full h-8 flex-shrink-0 items-center">
+            <Navbar></Navbar>
+         </div>
+         <div class="design-area flex flex-auto">
+            <Canvas class="canvas"></Canvas>
+         </div>
       </div>
    </div>
 </template>
@@ -13,6 +18,7 @@
 import { useThemeVars } from "naive-ui";
 import Canvas from "./canvas.vue";
 import Navbar from "./navbar.vue";
+import Toolbar from "./toolbar.vue";
 
 const theme = useThemeVars();
 </script>
@@ -23,8 +29,16 @@ const theme = useThemeVars();
    // border-bottom: 1px solid v-bind("theme.dividerColor");
 }
 
+.toolbar {
+   background-color: v-bind("theme.cardColor");
+   // border-right: 1px solid v-bind("theme.dividerColor");
+}
+
 .design-area {
    background-color: v-bind("theme.cardColor");
+}
+
+.canvas {
    border: 1px solid v-bind("theme.borderColor");
 }
 </style>

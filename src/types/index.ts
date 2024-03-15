@@ -26,3 +26,5 @@ export interface Layer {
    isVisible: boolean;
    isLocked: boolean;
 }
+
+export type Tool = "move" | "select" | "brush" | "eraser" | "paint-bucket";
