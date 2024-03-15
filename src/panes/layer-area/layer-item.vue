@@ -80,6 +80,8 @@ enum LayerContextMenu {
    DUPLICATE,
    RENAME,
    DELETE,
+   MOVE_UP,
+   MOVE_DOWN,
 }
 
 const contextMenuOptions: DropdownOption[] = reactive([
@@ -94,6 +96,14 @@ const contextMenuOptions: DropdownOption[] = reactive([
    {
       label: "Duplicate",
       key: LayerContextMenu.DUPLICATE,
+   },
+   {
+      label: "Move up",
+      key: LayerContextMenu.MOVE_UP,
+   },
+   {
+      label: "Move down",
+      key: LayerContextMenu.MOVE_DOWN,
    },
    {
       label: "Rename",
@@ -115,6 +125,12 @@ function handleContextMenuSelect(e: LayerContextMenu, hide: Function) {
          break;
       case LayerContextMenu.DUPLICATE:
          projectStore.duplicateLayer(props.layer);
+         break;
+      case LayerContextMenu.MOVE_UP:
+         projectStore.moveLayer(props.layer, -1);
+         break;
+      case LayerContextMenu.MOVE_DOWN:
+         projectStore.moveLayer(props.layer, 1);
          break;
       case LayerContextMenu.RENAME:
          isEditingLayerNameInput.value = true;
