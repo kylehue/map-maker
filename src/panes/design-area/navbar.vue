@@ -90,7 +90,7 @@ import {
    PhArrowClockwise,
 } from "@phosphor-icons/vue";
 import { map } from "../../utils/map";
-import { designerStore } from "../../store/designer";
+import { useDesignerStore } from "../../store/designer";
 
 enum Navigation {
    DISPLAY_DROPDOWN,
@@ -138,13 +138,15 @@ const navOptions: MenuOption[] = [
    },
 ];
 
+const designerStore = useDesignerStore();
 const zoomViewportButton = ref();
 function moveDesigner(x: number, y: number) {
-   designerStore.position.x += -x * 2;
-   designerStore.position.y += -y * 2;
+   const position = designerStore.position;
+   position.x += -x * 2;
+   position.y += -y * 2;
 }
 
 function zoomDesigner(x: number, y: number) {
-   designerStore.zoom += (-x - y) * 4;
+   designerStore.addZoom(-(x + y) * 4);
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
    <div ref="containerRef" class="flex flex-col w-full h-full">
-      <template v-if="isDragAndDropping || projectStore.materials.length">
+      <template v-if="isDragAndDropping || !projectStore.materials.length">
          <NUpload
             multiple
             directory-dnd
@@ -37,9 +37,11 @@
             <Navbar />
          </div>
          <div
-            class="material-area flex flex-col flex-auto items-start p-2 overflow-auto"
+            class="material-area flex flex-wrap flex-auto items-start p-2 overflow-auto"
          >
-            b
+            <template v-for="material in projectStore.materials">
+               <Material :material="material"></Material>
+            </template>
          </div>
       </template>
    </div>
@@ -60,9 +62,11 @@ import {
 import { onMounted, reactive, ref, watch } from "vue";
 import { PhUpload } from "@phosphor-icons/vue";
 import Navbar from "./navbar.vue";
-import { projectStore } from "../../store/project";
+import Material from "./material-item.vue";
+import { useProjectStore } from "../../store/project";
 type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
 
+const projectStore = useProjectStore();
 const theme = useThemeVars();
 const containerRef = ref<HTMLDivElement>();
 const isDragAndDropping = ref(false);
@@ -106,4 +110,4 @@ addEventListener("drop", () => {
 .material-area {
    background: v-bind("theme.cardColor");
 }
-</style>
+</style>../../components/material-item.vue

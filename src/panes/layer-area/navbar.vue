@@ -1,7 +1,11 @@
 <template>
    <div class="flex w-full h-full items-center justify-between px-4">
       <div class="flex items-center">
-         <NButton size="tiny" secondary>
+         <NButton
+            size="tiny"
+            secondary
+            @click="projectStore.createLayer('new layer')"
+         >
             <template #icon>
                <NIcon>
                   <PhStackSimple />
@@ -13,7 +17,51 @@
       <div class="flex items-center">
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  :disabled="!projectStore.selectedLayer"
+                  @click="
+                     () => projectStore.moveLayer(projectStore.selectedLayer!, -1)
+                  "
+               >
+                  <template #icon>
+                     <PhCaretUp />
+                  </template>
+               </NButton>
+            </template>
+            Move Up
+         </NTooltip>
+         <NTooltip animated>
+            <template #trigger>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  :disabled="!projectStore.selectedLayer"
+                  @click="
+                     () => projectStore.moveLayer(projectStore.selectedLayer!, 1)
+                  "
+               >
+                  <template #icon>
+                     <PhCaretDown />
+                  </template>
+               </NButton>
+            </template>
+            Move Down
+         </NTooltip>
+         <NTooltip animated>
+            <template #trigger>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  :disabled="!projectStore.selectedLayer"
+                  @click="
+                     () => projectStore.selectedLayer!.isLocked = !projectStore.selectedLayer!.isLocked
+                  "
+               >
                   <template #icon>
                      <PhLockSimple />
                   </template>
@@ -23,7 +71,15 @@
          </NTooltip>
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  :disabled="!projectStore.selectedLayer"
+                  @click="
+                     () => projectStore.duplicateLayer(projectStore.selectedLayer!)
+                  "
+               >
                   <template #icon>
                      <PhCopy />
                   </template>
@@ -33,17 +89,15 @@
          </NTooltip>
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
-                  <template #icon>
-                     <PhPencilSimple />
-                  </template>
-               </NButton>
-            </template>
-            Rename
-         </NTooltip>
-         <NTooltip animated>
-            <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  :disabled="!projectStore.selectedLayer"
+                  @click="
+                     () => projectStore.deleteLayer(projectStore.selectedLayer!)
+                  "
+               >
                   <template #icon>
                      <PhTrashSimple />
                   </template>
@@ -62,6 +116,9 @@ import {
    PhLockSimple,
    PhTrashSimple,
    PhCopy,
-   PhPencilSimple
+   PhCaretUp,
+   PhCaretDown
 } from "@phosphor-icons/vue";
+import { useProjectStore } from "../../store/project";
+const projectStore = useProjectStore();
 </script>

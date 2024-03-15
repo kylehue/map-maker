@@ -1,9 +1,11 @@
 import { createApp } from "vue";
 import "./assets/styles/index.css";
 import App from "./main.vue";
-import { map } from "./utils/map";
+import { createPinia } from "pinia";
 
+const pinia = createPinia();
 const app = createApp(App);
+app.use(pinia);
 app.directive("drag-slider", {
    mounted(el, binding) {
       if (!(el instanceof HTMLElement)) {

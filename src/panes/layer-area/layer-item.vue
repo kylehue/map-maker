@@ -1,20 +1,25 @@
 <template>
    <div
+      ref="containerRef"
       class="layer flex flex-shrink-0 items-center justify-between h-10 gap-2 p-2 rounded w-full"
       @click.right="handleRightClick"
       @dblclick="() => (isEditingLayerNameInput = true)"
       @keydown.f2="() => (isEditingLayerNameInput = true)"
       :tabindex="0"
+      @click="() => projectStore.setSelectedLayer(layer)"
+      :class="{
+         selected: layer === projectStore.selectedLayer,
+      }"
    >
       <div class="start">
          <NButton
             size="tiny"
             quaternary
             circle
-            @click="emit('toggle-visibility', !props.isHidden)"
+            @click="() => (layer.isVisible = !layer.isVisible)"
          >
             <NIcon>
-               <PhEyeSlash v-if="props.isHidden" />
+               <PhEyeSlash v-if="!layer.isVisible" />
                <PhEye v-else />
             </NIcon>
          </NButton>
@@ -29,11 +34,11 @@
       </div>
       <div class="end">
          <NButton
-            v-if="props.isLocked"
+            v-if="layer.isLocked"
             size="tiny"
             quaternary
             circle
-            @click="emit('toggle-lock', false)"
+            @click="() => (layer.isLocked = !layer.isLocked)"
          >
             <NIcon>
                <PhLockSimple />
@@ -46,28 +51,28 @@
 <script setup lang="ts">
 import { NButton, NText, NIcon, useThemeVars, DropdownOption } from "naive-ui";
 import { reactive, ref, watch } from "vue";
-import { PhEye, PhEyeSlash, PhLockSimple } from "@phosphor-icons/vue";
-import { useContextMenu } from "../composables/use-context-menu";
+import {
+   PhEye,
+   PhEyeSlash,
+   PhLockSimple,
+   PhCaretUp,
+   PhCaretDown,
+} from "@phosphor-icons/vue";
+import { useContextMenu } from "../../composables/use-context-menu";
+import { useProjectStore } from "../../store/project";
+import type { Layer } from "../../types";
+import { clamp } from "../../utils/clamp";
 
 const theme = useThemeVars();
-
+const projectStore = useProjectStore();
 const props = defineProps<{
-   name: string;
-   isLocked?: boolean;
-   isHidden?: boolean;
+   layer: Layer;
 }>();
 
-const emit = defineEmits<{
-   (event: "toggle-lock", shouldLock: boolean): void;
-   (event: "toggle-visibility", shouldShow: boolean): void;
-   (event: "duplicate"): void;
-   (event: "rename", newName: string): void;
-   (event: "delete"): void;
-}>();
-
+const containerRef = ref<HTMLDivElement>();
 const isEditingLayerNameInput = ref(false);
 const layerNameInputRef = ref<HTMLInputElement>();
-const layerNameInputValue = ref(props.name);
+const layerNameInputValue = ref(props.layer.name);
 
 enum LayerContextMenu {
    TOGGLE_LOCK,
@@ -79,11 +84,11 @@ enum LayerContextMenu {
 
 const contextMenuOptions: DropdownOption[] = reactive([
    {
-      label: () => (props.isLocked ? "Unlock" : "Lock"),
+      label: () => (props.layer.isLocked ? "Unlock" : "Lock"),
       key: LayerContextMenu.TOGGLE_LOCK,
    },
    {
-      label: () => (props.isHidden ? "Show" : "Hide"),
+      label: () => (props.layer.isVisible ? "Hide" : "Show"),
       key: LayerContextMenu.TOGGLE_VISIBILITY,
    },
    {
@@ -103,19 +108,19 @@ const contextMenuOptions: DropdownOption[] = reactive([
 function handleContextMenuSelect(e: LayerContextMenu, hide: Function) {
    switch (e) {
       case LayerContextMenu.TOGGLE_VISIBILITY:
-         emit("toggle-visibility", !props.isHidden);
+         props.layer.isVisible = !props.layer.isVisible;
          break;
       case LayerContextMenu.TOGGLE_LOCK:
-         emit("toggle-lock", !props.isLocked);
+         props.layer.isLocked = !props.layer.isLocked;
          break;
       case LayerContextMenu.DUPLICATE:
-         emit("duplicate");
+         projectStore.duplicateLayer(props.layer);
          break;
       case LayerContextMenu.RENAME:
          isEditingLayerNameInput.value = true;
          break;
       case LayerContextMenu.DELETE:
-         emit("delete");
+         projectStore.deleteLayer(props.layer);
          break;
    }
 
@@ -134,8 +139,8 @@ function handleRightClick(e: MouseEvent) {
 
 function handleLayerNameInput() {
    layerNameInputValue.value = layerNameInputValue.value.trim();
-   if (layerNameInputValue.value !== props.name) {
-      emit("rename", layerNameInputValue.value);
+   if (layerNameInputValue.value !== props.layer.name) {
+      props.layer.name = layerNameInputValue.value;
    }
 
    isEditingLayerNameInput.value = false;
@@ -147,6 +152,10 @@ watch(isEditingLayerNameInput, (isEditingLayer) => {
    layerNameInputRef.value!.select();
    layerNameInputRef.value!.focus();
 });
+
+defineExpose({
+   elRef: containerRef,
+});
 </script>
 
 <style scoped lang="scss">
@@ -155,8 +164,14 @@ watch(isEditingLayerNameInput, (isEditingLayer) => {
    outline: none;
    cursor: pointer;
    transition: background 200ms;
+   opacity: 0.7;
    &:hover {
-      background: v-bind("theme.hoverColor") !important;
+      background: v-bind("theme.buttonColor2Hover") !important;
+   }
+
+   &.selected {
+      background: v-bind("theme.buttonColor2Pressed");
+      opacity: 1;
    }
 }
 

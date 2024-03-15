@@ -1,4 +1,5 @@
 <template>
+   <MaterialManager></MaterialManager>
    <ContextMenu></ContextMenu>
    <div class="flex flex-col w-screen h-screen">
       <div class="navbar flex w-screen h-10 flex-shrink-0 items-center">
@@ -58,9 +59,11 @@ import DesignArea from "./panes/design-area/index.vue";
 import MaterialArea from "./panes/material-area/index.vue";
 import MatrixArea from "./panes/matrix-area/index.vue";
 import LayerArea from "./panes/layer-area/index.vue";
-import { settingsStore } from "./store/settings";
+import { useSettingsStore } from "./store/settings";
 import ContextMenu from "./components/context-menu.vue";
+import MaterialManager from "./components/material-manager.vue";
 
+const settingsStore = useSettingsStore();
 const theme = useThemeVars();
 </script>
 

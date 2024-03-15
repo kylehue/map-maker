@@ -4,10 +4,21 @@
          <Navbar></Navbar>
       </div>
       <div
+         ref="layerContainerRef"
          class="layer-area flex flex-col flex-auto items-start p-2 overflow-auto"
       >
-         <template v-for="i in 50">
-            <Layer :name="'Layer ' + i"></Layer>
+         <template v-for="layer in projectStore.layers" :key="layer.id">
+            <Layer
+               :ref="
+                  (e) => {
+                     layersRef.push({
+                        item: e,
+                        layer,
+                     });
+                  }
+               "
+               :layer="layer"
+            ></Layer>
          </template>
       </div>
    </div>
@@ -15,11 +26,58 @@
 
 <script setup lang="ts">
 import { MenuOption, NMenu, useThemeVars } from "naive-ui";
-import { reactive, ref, watch } from "vue";
+import { Ref, onUpdated, reactive, ref, watch } from "vue";
 import Navbar from "./navbar.vue";
-import Layer from "../../components/layer.vue";
+import Layer from "./layer-item.vue";
+import { useProjectStore } from "../../store/project";
+import type { Layer as ILayer } from "../../types";
 
+const layersRef: {
+   item: any;
+   layer: ILayer;
+}[] = reactive([]);
+const layerContainerRef = ref<HTMLDivElement>();
+const projectStore = useProjectStore();
 const theme = useThemeVars();
+
+function scrollToSelectedLayerElement() {
+   const selectedLayerRef = layersRef.find(
+      (e) => e.layer === projectStore.selectedLayer
+   );
+   if (!selectedLayerRef || !layerContainerRef.value) return;
+
+   const container = layerContainerRef.value;
+   const element = selectedLayerRef.item.elRef;
+
+   // Get the bounding rectangles
+   const containerRect = container.getBoundingClientRect();
+   const elementRect = element.getBoundingClientRect();
+
+   // Calculate positions
+   const elementTopRelativeToContainer = elementRect.top - containerRect.top;
+   const elementBottomRelativeToContainer =
+      elementRect.bottom - containerRect.top;
+
+   // Check if the element is outside the visible area of the container
+   if (
+      elementTopRelativeToContainer < 0 ||
+      elementBottomRelativeToContainer > container.offsetHeight
+   ) {
+      // Element is outside, scroll the container
+      container.scrollTo({
+         top:
+            element.offsetTop -
+            container.offsetTop -
+            container.offsetHeight / 2 +
+            element.offsetHeight / 2,
+         behavior: "smooth", // Optional: smooth scroll
+      });
+   }
+}
+
+onUpdated(() => {
+   scrollToSelectedLayerElement();
+});
 </script>
 
 <style scoped lang="scss">
@@ -34,3 +92,4 @@ const theme = useThemeVars();
    background: v-bind("theme.cardColor");
 }
 </style>
+../../components/layer-item.vue

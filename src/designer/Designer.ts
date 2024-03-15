@@ -1,8 +1,8 @@
 import { useMouse } from "@vueuse/core";
-import { projectStore } from "../store/project";
+import { useProjectStore } from "../store/project";
 import { Camera } from "./Camera";
 import { pointToAABBCollision } from "./utils";
-import { designerStore } from "../store/designer";
+import { useDesignerStore } from "../store/designer";
 import { clamp } from "../utils/clamp";
 
 const { x: mouseX, y: mouseY } = useMouse();
@@ -11,6 +11,8 @@ export class Designer {
    public readonly canvas = document.createElement("canvas");
    public readonly context = this.canvas.getContext("2d")!;
    private readonly camera = new Camera(this.context);
+   private readonly designerStore = useDesignerStore();
+   private readonly projectStore = useProjectStore();
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
@@ -44,7 +46,7 @@ export class Designer {
 
    private drawTiles() {
       const ctx = this.context;
-      const size = projectStore.tileSize || 1;
+      const size = this.projectStore.tileSize || 1;
 
       const offset = 4;
       const rowStart = ~~(this.camera.viewport.top / size) - offset;
@@ -103,8 +105,10 @@ export class Designer {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
       this.camera.begin();
-      this.camera.moveTo(designerStore.position.x, designerStore.position.y);
-      this.camera.zoomTo(designerStore.zoom);
+      const position = this.designerStore.position;
+      const zoom = this.designerStore.zoom;
+      this.camera.moveTo(position.x, position.y);
+      this.camera.zoomTo(zoom);
       this.drawTiles();
 
       this.camera.end();
