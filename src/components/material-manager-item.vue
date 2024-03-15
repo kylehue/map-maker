@@ -1,40 +1,36 @@
 <template>
-   <NCollapseItem>
+   <NCollapseItem :name="material.id">
       <template #header>
-         <div class="flex gap-2 items-center justify-between w-full">
-            <div class="start flex items-center gap-2">
-               <div class="relative flex items-center justify-center size-16">
-                  <img
-                     :src="materialTransformedImg?.src"
-                     class="object-contain w-full h-full"
-                  />
-                  <NText
-                     class="text-2xl font-bold absolute mix-blend-difference"
-                  >
-                     {{ material.matrixId }}
-                  </NText>
-               </div>
-               <NText>
-                  {{ material.name }}
+         <div class="flex items-center gap-2">
+            <div class="relative flex items-center justify-center size-16">
+               <img
+                  :src="materialTransformedImg?.src"
+                  class="object-contain w-full h-full"
+               />
+               <NText class="text-2xl font-bold absolute mix-blend-difference">
+                  {{ material.matrixId }}
                </NText>
             </div>
-            <div class="end flex items-center gap-1">
-               <NButton
-                  secondary
-                  type="tertiary"
-                  @click="projectStore.duplicateMaterial(material)"
-               >
-                  Duplicate
-               </NButton>
-               <NButton
-                  secondary
-                  type="error"
-                  @click="projectStore.deleteMaterial(material)"
-               >
-                  Delete
-               </NButton>
-            </div>
+            <NText>
+               {{ material.name }}
+            </NText>
          </div>
+      </template>
+      <template #header-extra>
+         <NButton
+            secondary
+            type="tertiary"
+            @click="projectStore.duplicateMaterial(material)"
+         >
+            Duplicate
+         </NButton>
+         <NButton
+            secondary
+            type="error"
+            @click="projectStore.deleteMaterial(material)"
+         >
+            Delete
+         </NButton>
       </template>
       <NDivider class="!mt-0" />
       <div class="flex items-center justify-between px-12">
@@ -46,10 +42,7 @@
             </div>
             <div class="flex flex-col w-fit">
                <NText>Matrix ID</NText>
-               <NInput
-                  v-model:value="material.matrixId"
-                  class="min-w-[300px]"
-               >
+               <NInput v-model:value="material.matrixId" class="min-w-[300px]">
                </NInput>
             </div>
             <div class="flex flex-col w-fit">

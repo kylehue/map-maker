@@ -84,7 +84,7 @@ enum LayerContextMenu {
    MOVE_DOWN,
 }
 
-const contextMenuOptions: DropdownOption[] = reactive([
+const contextMenuOptions: DropdownOption[] = [
    {
       label: () => (props.layer.isLocked ? "Unlock" : "Lock"),
       key: LayerContextMenu.TOGGLE_LOCK,
@@ -113,7 +113,7 @@ const contextMenuOptions: DropdownOption[] = reactive([
       label: "Delete",
       key: LayerContextMenu.DELETE,
    },
-]);
+];
 
 function handleContextMenuSelect(e: LayerContextMenu, hide: Function) {
    switch (e) {

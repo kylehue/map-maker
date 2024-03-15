@@ -32,27 +32,6 @@ export const useProjectStore = defineStore("project", () => {
       _materialsSearcher.addAll(_materials);
    });
 
-   // TODO: remove dummy data
-   // for (let i = 0; i < 50; i++) {
-   //    _materials.push({
-   //       id: generateId(),
-   //       filename: "idk",
-   //       isHorizontallyFlipped: false,
-   //       isVerticallyFlipped: false,
-   //       matrixId: i.toString(),
-   //       rotation: 0,
-   //       imageSrc: "https://i.stack.imgur.com/UUKMr.png",
-   //    });
-   // }
-   for (let i = 0; i < 50; i++) {
-      _layers.push({
-         id: generateId(),
-         name: "Layer " + i,
-         isLocked: false,
-         isVisible: true,
-      });
-   }
-
    function duplicateLayer(layer: Layer) {
       for (let i = _layers.length - 1; i >= 0; i--) {
          if (_layers[i] !== layer) continue;
@@ -77,7 +56,7 @@ export const useProjectStore = defineStore("project", () => {
       }
    }
 
-   function createLayer(name: string) {
+   function createLayer(name = "new layer") {
       _layers.unshift({
          id: generateId(),
          name,

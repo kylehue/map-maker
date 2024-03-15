@@ -5,6 +5,7 @@
             class="material relative flex flex-shrink-0 items-center justify-center p-2 rounded w-24 h-24"
             :tabindex="0"
             @click="() => projectStore.setSelectedMaterial(material)"
+            @click.right="handleRightClick"
             :class="{
                selected: material === projectStore.selectedMaterial,
             }"
@@ -26,12 +27,15 @@
 </template>
 
 <script setup lang="ts">
-import { useThemeVars, NTooltip } from "naive-ui";
+import { useThemeVars, NTooltip, DropdownOption } from "naive-ui";
 import { useSettingsStore } from "../../store/settings";
 import { useProjectStore } from "../../store/project";
 import type { Material } from "../../types";
 import { getTransformedMaterialImage } from "../../utils/material-utils";
 import { computedAsync } from "@vueuse/core";
+import { reactive } from "vue";
+import { useMaterialManager } from "../../composables/use-material-manager";
+import { useContextMenu } from "../../composables/use-context-menu";
 
 const props = defineProps<{
    material: Material;
@@ -47,6 +51,53 @@ const materialTransformedImg = computedAsync(() => {
       props.material.image.height
    );
 });
+
+enum MaterialContextMenu {
+   OPEN_IN_MANAGER,
+   DUPLICATE,
+   DELETE,
+}
+
+const contextMenuOptions: DropdownOption[] = [
+   {
+      label: "Open in Material Manager...",
+      key: MaterialContextMenu.OPEN_IN_MANAGER,
+   },
+   {
+      label: "Duplicate",
+      key: MaterialContextMenu.DUPLICATE,
+   },
+   {
+      label: "Delete",
+      key: MaterialContextMenu.DELETE,
+   },
+];
+
+function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
+   switch (e) {
+      case MaterialContextMenu.OPEN_IN_MANAGER:
+         useMaterialManager(props.material);
+         break;
+      case MaterialContextMenu.DUPLICATE:
+         projectStore.duplicateMaterial(props.material);
+         break;
+      case MaterialContextMenu.DELETE:
+         projectStore.deleteMaterial(props.material);
+         break;
+   }
+
+   hide();
+}
+
+function handleRightClick(e: MouseEvent) {
+   e.preventDefault();
+   useContextMenu(
+      contextMenuOptions,
+      handleContextMenuSelect,
+      e.pageX,
+      e.pageY
+   );
+}
 </script>
 
 <style scoped lang="scss">

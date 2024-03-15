@@ -7,8 +7,11 @@
             accept="image/*"
             class="w-full h-full"
             :on-change="handleFileUpload"
+            :show-file-list="false"
          >
-            <NUploadDragger class="!border-none w-full h-full">
+            <NUploadDragger
+               class="!border-none w-full h-full flex items-center justify-center"
+            >
                <div class="flex flex-col items-center">
                   <NIcon size="48" :depth="3" class="mb-4">
                      <PhUpload />
@@ -20,12 +23,6 @@
                      Use this space to keep your tilesheets, tiles, or any other
                      images you wish to utilize.
                   </NP>
-                  <NDivider />
-                  <NAlert title="Warning" type="warning">
-                     If you plan to save this project, ensure that you create a
-                     dedicated folder to store all uploaded files, as we only
-                     keep track of filepaths.
-                  </NAlert>
                </div>
             </NUploadDragger>
          </NUpload>
@@ -36,6 +33,7 @@
          </div>
          <div
             class="material-area flex flex-wrap flex-auto items-start p-2 overflow-auto"
+            @click.self.right="handleRightClick"
          >
             <template v-for="material in materialsComputed" :key="material.id">
                <Material :material="material"></Material>
@@ -52,19 +50,23 @@ import {
    NUpload,
    NUploadDragger,
    NIcon,
-   NAlert,
    NDivider,
    useThemeVars,
    UploadProps,
+   DropdownOption,
 } from "naive-ui";
-import { onMounted, computed, ref, watch } from "vue";
+import { onMounted, computed, ref } from "vue";
 import { PhUpload } from "@phosphor-icons/vue";
 import Navbar from "./navbar.vue";
 import Material from "./material-item.vue";
 import { useProjectStore } from "../../store/project";
 import { loadImage } from "../../utils/material-utils";
+import { useMaterialManager } from "../../composables/use-material-manager";
+import { useSettingsStore } from "../../store/settings";
+import { useContextMenu } from "../../composables/use-context-menu";
 type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
 
+const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
 const containerRef = ref<HTMLDivElement>();
@@ -73,6 +75,50 @@ const searchMaterialText = ref("");
 const materialsComputed = computed(() =>
    projectStore.searchMaterial(searchMaterialText.value)
 );
+
+enum MaterialContextMenu {
+   OPEN_MANAGER,
+   TOGGLE_MATRIX_ID,
+}
+
+const contextMenuOptions: DropdownOption[] = [
+   {
+      label: "Open Material Manager...",
+      key: MaterialContextMenu.OPEN_MANAGER,
+   },
+   {
+      label: () => {
+         return `${
+            settingsStore.materialArea.showMatrixId ? "Hide" : "Show"
+         } Matrix IDs`;
+      },
+      key: MaterialContextMenu.TOGGLE_MATRIX_ID,
+   },
+];
+
+function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
+   switch (e) {
+      case MaterialContextMenu.OPEN_MANAGER:
+         useMaterialManager();
+         break;
+      case MaterialContextMenu.TOGGLE_MATRIX_ID:
+         settingsStore.materialArea.showMatrixId =
+            !settingsStore.materialArea.showMatrixId;
+         break;
+   }
+
+   hide();
+}
+
+function handleRightClick(e: MouseEvent) {
+   e.preventDefault();
+   useContextMenu(
+      contextMenuOptions,
+      handleContextMenuSelect,
+      e.pageX,
+      e.pageY
+   );
+}
 
 function handleFileUpload(data: FileUploadData) {
    if (!data.file.fullPath) return;

@@ -13,9 +13,10 @@
             @close="() => (isMaterialManagerVisible = false)"
          >
             <div class="relative flex flex-col w-full h-full overflow-hidden">
-               <div class="flex flex-row w-fit z-10">
+               <div class="flex flex-row gap-2 w-fit z-10">
                   <NInput
                      placeholder="Search"
+                     class="max-w-[300px]"
                      clearable
                      v-model:value="searchMaterialText"
                   >
@@ -25,11 +26,22 @@
                         </NIcon>
                      </template>
                   </NInput>
+                  <NButton
+                     v-if="!!focusedMaterial"
+                     @click="() => (focusedMaterial = undefined)"
+                     quaternary
+                  >
+                     Browse Materials
+                  </NButton>
                </div>
                <div
                   class="flex flex-col absolute overflow-auto w-full h-full pt-16"
                >
-                  <NCollapse class="flex flex-col overflow-auto h-full px-4">
+                  <NCollapse
+                     class="flex flex-col overflow-auto h-full px-4"
+                     :trigger-areas="['main', 'arrow']"
+                     :expanded-names="focusedMaterial?.id"
+                  >
                      <template
                         v-for="material in materialsComputed"
                         :key="material.id"
@@ -46,8 +58,11 @@
 </template>
 
 <script setup lang="ts">
-import { NCard, NInput, NCollapse, NIcon } from "naive-ui";
-import { isMaterialManagerVisible } from "../composables/use-material-manager";
+import { NCard, NInput, NCollapse, NIcon, NButton } from "naive-ui";
+import {
+   focusedMaterial,
+   isMaterialManagerVisible,
+} from "../composables/use-material-manager";
 import { PhMagnifyingGlass } from "@phosphor-icons/vue";
 import MaterialManagerItem from "./material-manager-item.vue";
 import { useProjectStore } from "../store/project";
@@ -56,9 +71,18 @@ import { computed, ref, watch } from "vue";
 const projectStore = useProjectStore();
 const searchMaterialText = ref("");
 
-const materialsComputed = computed(() =>
-   projectStore.searchMaterial(searchMaterialText.value)
-);
+watch(searchMaterialText, () => {
+   focusedMaterial.value = undefined;
+});
+
+const materialsComputed = computed(() => {
+   if (focusedMaterial.value) {
+      return projectStore.materials.filter(
+         (v) => v.id === focusedMaterial.value?.id
+      );
+   }
+   return projectStore.searchMaterial(searchMaterialText.value);
+});
 </script>
 
 <style scoped lang="scss">

@@ -8,6 +8,7 @@
                accept="image/*"
                :on-change="handleFileUpload"
                class="flex items-center"
+               :show-file-list="false"
             >
                <NButton size="tiny" secondary>
                   <template #icon>

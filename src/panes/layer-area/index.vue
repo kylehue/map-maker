@@ -6,6 +6,7 @@
       <div
          ref="layerContainerRef"
          class="layer-area flex flex-col flex-auto items-start p-2 overflow-auto"
+         @click.self.right="handleRightClick"
       >
          <template v-for="layer in projectStore.layers" :key="layer.id">
             <Layer
@@ -25,12 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { MenuOption, NMenu, useThemeVars } from "naive-ui";
+import { DropdownOption, MenuOption, NMenu, useThemeVars } from "naive-ui";
 import { Ref, onUpdated, reactive, ref, watch } from "vue";
 import Navbar from "./navbar.vue";
 import Layer from "./layer-item.vue";
 import { useProjectStore } from "../../store/project";
 import type { Layer as ILayer } from "../../types";
+import { useContextMenu } from "../../composables/use-context-menu";
 
 const layersRef: {
    item: any;
@@ -39,6 +41,37 @@ const layersRef: {
 const layerContainerRef = ref<HTMLDivElement>();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
+
+enum MaterialContextMenu {
+   CREATE_NEW_LAYER,
+}
+
+const contextMenuOptions: DropdownOption[] = [
+   {
+      label: "Create new layer",
+      key: MaterialContextMenu.CREATE_NEW_LAYER,
+   },
+];
+
+function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
+   switch (e) {
+      case MaterialContextMenu.CREATE_NEW_LAYER:
+         projectStore.createLayer();
+         break;
+   }
+
+   hide();
+}
+
+function handleRightClick(e: MouseEvent) {
+   e.preventDefault();
+   useContextMenu(
+      contextMenuOptions,
+      handleContextMenuSelect,
+      e.pageX,
+      e.pageY
+   );
+}
 
 function scrollToSelectedLayerElement() {
    const selectedLayerRef = layersRef.find(
