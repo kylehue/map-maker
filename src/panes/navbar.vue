@@ -10,6 +10,7 @@
             arrowPointToCenter: true,
             showArrow: true,
          }"
+         @update:value="handleSelect"
       />
       <ThemeSwitcher></ThemeSwitcher>
    </div>
@@ -19,22 +20,24 @@
 import { MenuOption, NMenu } from "naive-ui";
 import { reactive, ref, watch } from "vue";
 import ThemeSwitcher from "../components/theme-switcher.vue";
+import { useProjectStore } from "../store/project";
 
 enum Navigation {
    FILE_DROPDOWN,
+   FILE_NEW_PROJECT,
+   FILE_OPEN_FILES,
+   FILE_EXPORT,
    WINDOW_DROPDOWN,
-   EDIT_DROPDOWN,
-   NEW_PROJECT,
-   OPEN_FILES,
-   EXPORT,
    WINDOW_SHOW_MATRIX,
    WINDOW_SHOW_MATERIALS,
    WINDOW_SHOW_LAYERS,
-   UNDO,
-   REDO,
+   EDIT_DROPDOWN,
+   EDIT_UNDO,
+   EDIT_REDO,
    EDIT_TILE_SIZE,
 }
 
+const projectStore = useProjectStore();
 const navActiveKey = ref<Navigation>();
 const navOptions: MenuOption[] = [
    {
@@ -42,15 +45,15 @@ const navOptions: MenuOption[] = [
       label: "File",
       children: [
          {
-            key: Navigation.NEW_PROJECT,
+            key: Navigation.FILE_NEW_PROJECT,
             label: "New...",
          },
          {
-            key: Navigation.OPEN_FILES,
+            key: Navigation.FILE_OPEN_FILES,
             label: "Open...",
          },
          {
-            key: Navigation.EXPORT,
+            key: Navigation.FILE_EXPORT,
             label: "Export as...",
          },
       ],
@@ -60,11 +63,11 @@ const navOptions: MenuOption[] = [
       label: "Edit",
       children: [
          {
-            key: Navigation.UNDO,
+            key: Navigation.EDIT_UNDO,
             label: "Undo",
          },
          {
-            key: Navigation.REDO,
+            key: Navigation.EDIT_REDO,
             label: "Redo",
          },
          {
@@ -93,11 +96,11 @@ const navOptions: MenuOption[] = [
    },
 ];
 
-watch(navActiveKey, (key) => {
-   if (!key) return;
-   switch (key) {
+function handleSelect(e: Navigation) {
+   switch (e) {
+      case Navigation.FILE_NEW_PROJECT:
+         projectStore.reset();
+         break;
    }
-   console.log(key);
-   navActiveKey.value = undefined;
-});
+}
 </script>

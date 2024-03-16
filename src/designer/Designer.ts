@@ -5,8 +5,8 @@ import { pointToAABBCollision } from "./utils";
 import { useDesignerStore } from "../store/designer";
 import { clamp } from "../utils/clamp";
 import { Layer, Material } from "../types";
-import { getTotalHeight, getTotalWidth } from "../utils/layer-utils";
 import { useSettingsStore } from "../store/settings";
+import { useThemeVars } from "naive-ui";
 
 const { x: mouseX, y: mouseY } = useMouse();
 
@@ -17,8 +17,12 @@ export class Designer {
    private readonly designerStore = useDesignerStore();
    private readonly projectStore = useProjectStore();
    private readonly settingsStore = useSettingsStore();
+   private readonly theme = useThemeVars();
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
    private fps = 50;
+   private isMouseDown = false;
+   private readonly registeredMatrixId: Record<string, Record<string, string>> =
+      {};
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
@@ -31,6 +35,7 @@ export class Designer {
 
       const tick = () => {
          this.repaint();
+         if (this.isMouseDown) this.initTooling();
          setTimeout(() => {
             requestAnimationFrame(tick);
          }, 1000 / this.fps);
@@ -41,17 +46,96 @@ export class Designer {
          this.canvasBounds = this.canvas.getBoundingClientRect();
       });
 
+      this.canvas.addEventListener("mousedown", () => {
+         this.isMouseDown = true;
+         this.initTooling();
+      });
+
+      addEventListener("mouseup", () => {
+         this.isMouseDown = false;
+      });
+
       this.canvas.addEventListener("mouseenter", (e) => {
          this.fps = 50;
          this.repaint();
       });
 
       this.canvas.addEventListener("mouseleave", (e) => {
+         this.isMouseDown = false;
          this.fps = 4;
          this.repaint();
       });
 
       this.repaint();
+   }
+
+   // private convertRegisteredMatrixIdsToArray(layer: Layer) {
+   //    const result: string[][] = [];
+   //    const registeredMatrixIds = this.registeredMatrixId[layer.id];
+   //    if (!registeredMatrixIds) return result;
+
+   //    let minRow = Infinity;
+   //    let minCol = Infinity;
+   //    for (const pos of Object.keys(registeredMatrixIds)) {
+   //       const [row, col] = pos.split(",").map((v) => parseInt(v));
+   //       minRow = row < minRow ? row : minRow;
+   //       minCol = col < minCol ? col : minCol;
+   //    }
+
+   //    const min = Math.min(minRow, minCol);
+   //    for (const [pos, matrixId] of Object.entries(registeredMatrixIds)) {
+   //       let [row, col] = pos.split(",").map((v) => parseInt(v));
+   //       row += min;
+   //       col += min;
+   //       result[row] ??= [];
+   //       result[row][col] = matrixId;
+   //    }
+
+   //    return result;
+   // }
+
+   // private registerMatrixId(
+   //    layer: Layer,
+   //    row: number,
+   //    column: number,
+   //    matrixId: string
+   // ) {
+   //    if (this.getRegisteredMatrixId(layer, row, column) === matrixId) return;
+
+   //    this.registeredMatrixId[layer.id] ??= {};
+   //    this.registeredMatrixId[layer.id][`${row},${column}`] = matrixId;
+
+   //    // update layer's matrix
+   //    layer.matrix = this.convertRegisteredMatrixIdsToArray(layer);
+   // }
+
+   // private getRegisteredMatrixId(layer: Layer, row: number, column: number) {
+   //    return this.registeredMatrixId[layer.id]?.[`${row},${column}`] as
+   //       | string
+   //       | undefined;
+   // }
+
+   public initTooling() {
+      let [col, row] = this.getMouseColumnRow();
+      row = row >= 0 ? row + 1 : row;
+      col = col >= 0 ? col + 1 : col;
+
+      if (this.designerStore.activeTool == "brush") {
+         const activeMaterial = this.projectStore.selectedMaterial;
+         const activeLayer = this.projectStore.selectedLayer;
+         // console.log(activeLayer, activeMaterial);
+         if (!activeMaterial || !activeLayer) return;
+         activeLayer.matrix.add(row, col, activeMaterial.matrixId);
+         // this.registerMatrixId(
+         //    activeLayer,
+         //    row,
+         //    col,
+         //    activeMaterial.matrixId
+         // );
+         // activeLayer.matrix[row] ??= [];
+         // activeLayer.matrix[row][col] = activeMaterial.matrixId;
+         // console.log(activeLayer.matrix);
+      }
    }
 
    public setFPS(fps: number) {
@@ -85,8 +169,8 @@ export class Designer {
       const ctx = this.context;
       const tileSize = this.projectStore.tileSize || 1;
 
-      const totalWidth = getTotalWidth(layer, tileSize);
-      const totalHeight = getTotalHeight(layer, tileSize);
+      const totalWidth = layer.matrix.getTotalWidth(tileSize);
+      const totalHeight = layer.matrix.getTotalHeight(tileSize);
 
       const renderTileViewportOffset = 4;
       const rowStart =
@@ -108,31 +192,32 @@ export class Designer {
       // draw tiles
       for (
          let rowIndex = Math.max(0, rowStart);
-         rowIndex < Math.min(layer.matrix.length, rowEnd);
+         rowIndex < Math.min(layer.matrix.getMatrix().length, rowEnd);
          rowIndex++
       ) {
-         const row = layer.matrix[rowIndex];
+         const row = layer.matrix.getMatrix()[rowIndex];
+         if (!row) continue;
          for (
             let colIndex = Math.max(0, colStart);
             colIndex < Math.min(row.length, colEnd);
             colIndex++
          ) {
             const matrixId = row[colIndex];
+            if (typeof matrixId != "string") continue;
             const tileIsEmpty = matrixId === this.projectStore.emptyMatrixId;
 
             if (!tileIsEmpty) {
                const material =
                   this.projectStore.getMaterialByMatrixId(matrixId);
                if (!material) continue;
-               const x = colIndex * tileSize;
-               const y = rowIndex * tileSize;
-               ctx.drawImage(
-                  material.texture.getImageCanvas(),
-                  x,
-                  y,
-                  tileSize,
-                  tileSize
-               );
+               const {
+                  image,
+                  x: tx,
+                  y: ty,
+               } = this.getTransformedImageInfo(material);
+               const x = colIndex * tileSize - totalWidth / 2;
+               const y = rowIndex * tileSize - totalHeight / 2;
+               ctx.drawImage(image, x + tx, y + ty);
             }
          }
       }
@@ -216,6 +301,17 @@ export class Designer {
          ctx.closePath();
          ctx.stroke();
       }
+
+      ctx.font = "8px Courier New";
+      this.writeText("0x0", tileSize / 2, tileSize / 2);
+   }
+
+   private writeText(text: string, x: number, y: number) {
+      const ctx = this.context;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = this.theme.value?.textColorDisabled || "black";
+      ctx.fillText(text, x, y);
    }
 
    public repaint() {
@@ -228,7 +324,8 @@ export class Designer {
       this.camera.moveTo(position.x, position.y);
       this.camera.zoomTo(zoom);
 
-      for (const layer of this.projectStore.layers) {
+      for (let i = this.projectStore.layers.length - 1; i >= 0; i--) {
+         const layer = this.projectStore.layers[i];
          this.drawTiles(layer);
       }
 

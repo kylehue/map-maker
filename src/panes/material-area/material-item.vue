@@ -109,7 +109,6 @@ function handleRightClick(e: MouseEvent) {
 
    &.selected {
       background: v-bind("theme.buttonColor2Pressed");
-      opacity: 0.7;
    }
 
    img {

@@ -1,3 +1,4 @@
+import { MapMatrix } from "../utils/MapMatrix";
 import { MaterialTexture } from "../utils/MaterialTexture";
 
 export interface Project {
@@ -30,7 +31,7 @@ export interface Layer {
    name: string;
    isVisible: boolean;
    isLocked: boolean;
-   matrix: string[][];
+   matrix: MapMatrix;
 }
 
 export type Tool = "move" | "select" | "brush" | "eraser" | "paint-bucket";

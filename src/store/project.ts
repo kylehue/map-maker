@@ -5,6 +5,7 @@ import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
 import MiniSearch from "minisearch";
 import { MaterialTexture } from "../utils/MaterialTexture";
+import { MapMatrix } from "../utils/MapMatrix";
 
 export const useProjectStore = defineStore("project", () => {
    const _filename = ref("untitled project");
@@ -65,13 +66,15 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function createLayer(name = "new layer") {
-      _layers.unshift({
+      const layer: Layer = {
          id: generateId(),
          name,
          isLocked: false,
          isVisible: true,
-         matrix: [],
-      });
+         matrix: new MapMatrix(),
+      };
+      _layers.unshift(layer);
+      return layer;
    }
 
    function moveLayer(layer: Layer, step: number) {
@@ -96,7 +99,7 @@ export const useProjectStore = defineStore("project", () => {
       const material: Material = {
          id: generateId(),
          name,
-         matrixId: "0",
+         matrixId: _materials.length.toString(),
          positionOrigin: "center",
          texture: texture,
       };
@@ -170,6 +173,19 @@ export const useProjectStore = defineStore("project", () => {
       _emptyMatrixId.value = id;
    }
 
+   function reset() {
+      _filename.value = "untitled project";
+      _layers.length = 0;
+      _materials.length = 0;
+      _tileSize.value = 32;
+      _selectedLayer.value = undefined;
+      _selectedMaterial.value = undefined;
+      _emptyMatrixId.value = ".";
+      _matrixSeparator.value = " ";
+      materialsMap.clear();
+      _materialsSearcher.removeAll();
+   }
+
    const filename = computed(() => _filename.value);
    const emptyMatrixId = computed(() => _emptyMatrixId.value);
    const matrixSeparator = computed(() => _matrixSeparator.value);
@@ -203,5 +219,6 @@ export const useProjectStore = defineStore("project", () => {
       setSelectedLayer,
       selectedMaterial,
       setSelectedMaterial,
+      reset,
    };
 });
