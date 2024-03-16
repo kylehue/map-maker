@@ -4,10 +4,13 @@
          <div class="flex items-center gap-2">
             <div class="relative flex items-center justify-center size-16">
                <img
-                  :src="materialTransformedImg?.src"
+                  v-if="materialTransformedImg"
+                  :src="materialTransformedImg.src"
+                  loading="lazy"
                   class="object-contain w-full h-full"
                />
-               <NText class="text-2xl font-bold absolute mix-blend-difference">
+               <NSpin v-else></NSpin>
+               <NText class="matrix-id font-bold absolute shadow">
                   {{ material.matrixId }}
                </NText>
             </div>
@@ -63,9 +66,12 @@
          </div>
          <div class="relative size-32 flex items-center justify-center">
             <img
-               :src="materialTransformedImg?.src"
+               v-if="materialTransformedImg"
+               :src="materialTransformedImg.src"
+               loading="lazy"
                class="object-contain w-full h-full"
             />
+            <NSpin v-else></NSpin>
          </div>
       </div>
    </NCollapseItem>
@@ -80,6 +86,7 @@ import {
    NInput,
    NDivider,
    NSelect,
+   NSpin,
 } from "naive-ui";
 import type { Material } from "../types";
 import { computedAsync } from "@vueuse/core";

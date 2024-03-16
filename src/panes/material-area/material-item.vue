@@ -11,12 +11,15 @@
             }"
          >
             <img
-               :src="materialTransformedImg?.src"
+               v-if="materialTransformedImg"
+               :src="materialTransformedImg.src"
+               loading="lazy"
                class="object-contain w-full h-full"
             />
+            <NSpin v-else></NSpin>
             <span
                v-if="settingsStore.materialArea.showMatrixId"
-               class="absolute text-xl font-bold mix-blend-difference"
+               class="absolute font-bold matrix-id"
             >
                {{ material.matrixId }}
             </span>
@@ -27,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { useThemeVars, NTooltip, DropdownOption } from "naive-ui";
+import { useThemeVars, NTooltip, DropdownOption, NSpin } from "naive-ui";
 import { useSettingsStore } from "../../store/settings";
 import { useProjectStore } from "../../store/project";
 import type { Material } from "../../types";
@@ -44,13 +47,17 @@ const props = defineProps<{
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
-const materialTransformedImg = computedAsync(() => {
-   return getTransformedMaterialImage(
-      props.material,
-      props.material.image.width,
-      props.material.image.height
-   );
-});
+const materialTransformedImg = computedAsync(
+   () => {
+      return getTransformedMaterialImage(
+         props.material,
+         props.material.image.width,
+         props.material.image.height
+      );
+   },
+   null,
+   { lazy: true }
+);
 
 enum MaterialContextMenu {
    OPEN_IN_MANAGER,

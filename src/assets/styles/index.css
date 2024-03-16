@@ -30,6 +30,11 @@ body {
    overflow: hidden;
 }
 
+.matrix-id {
+   color: white !important;
+   text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+}
+
 .bounce-enter-active {
    animation: bounce-in 0.2s;
 }

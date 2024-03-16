@@ -27,9 +27,9 @@ export const useProjectStore = defineStore("project", () => {
       },
    });
 
+   let _materialsSearcherNeedsUpdate = true;
    watch(_materials, (_materials) => {
-      _materialsSearcher.removeAll();
-      _materialsSearcher.addAll(_materials);
+      _materialsSearcherNeedsUpdate = true;
    });
 
    function duplicateLayer(layer: Layer) {
@@ -115,6 +115,13 @@ export const useProjectStore = defineStore("project", () => {
 
    function searchMaterial(searchText: string) {
       if (!searchText) return _materials;
+
+      if (_materialsSearcherNeedsUpdate) {
+         _materialsSearcher.removeAll();
+         _materialsSearcher.addAll(_materials);
+         _materialsSearcherNeedsUpdate = false;
+      }
+
       const searchResults = _materialsSearcher.search(searchText);
       const ids = new Set();
       for (const result of searchResults) {
