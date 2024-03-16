@@ -16,7 +16,6 @@
                loading="lazy"
                class="object-contain w-full h-full"
             />
-            <NSpin v-else></NSpin>
             <span
                v-if="settingsStore.materialArea.showMatrixId"
                class="absolute font-bold matrix-id"
@@ -30,13 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { useThemeVars, NTooltip, DropdownOption, NSpin } from "naive-ui";
+import { useThemeVars, NTooltip, DropdownOption } from "naive-ui";
 import { useSettingsStore } from "../../store/settings";
 import { useProjectStore } from "../../store/project";
 import type { Material } from "../../types";
-import { getTransformedMaterialImage } from "../../utils/material-utils";
-import { computedAsync } from "@vueuse/core";
-import { reactive } from "vue";
+import { computed } from "vue";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useContextMenu } from "../../composables/use-context-menu";
 
@@ -48,15 +45,9 @@ const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
 
-const materialTransformedImg = computedAsync(async () => {
-   return (
-      await getTransformedMaterialImage(
-         props.material,
-         props.material.image.width,
-         props.material.image.height
-      )
-   ).toDataURL();
-});
+const materialTransformedImg = computed(() =>
+   props.material.texture.getImageCanvasURL()
+);
 
 enum MaterialContextMenu {
    OPEN_IN_MANAGER,

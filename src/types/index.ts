@@ -1,3 +1,5 @@
+import { MaterialTexture } from "../utils/MaterialTexture";
+
 export interface Project {
    filename: string;
    materials: Material[];
@@ -18,16 +20,9 @@ export type MaterialPositionOrigin =
 export interface Material {
    id: string;
    name: string;
-   imageSrc: string;
    matrixId: string;
-   rotation: MaterialRotation;
-   isHorizontallyFlipped: boolean;
-   isVerticallyFlipped: boolean;
-   image: HTMLImageElement;
-   transformedImage: CanvasImageSource;
-   transformedImageWidth: number;
-   transformedImageHeight: number;
    positionOrigin: MaterialPositionOrigin;
+   texture: MaterialTexture;
 }
 
 export interface Layer {

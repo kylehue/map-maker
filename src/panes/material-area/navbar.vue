@@ -121,18 +121,14 @@ import {
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useProjectStore } from "../../store/project";
 import { useSettingsStore } from "../../store/settings";
-import { loadImage } from "../../utils/material-utils";
 
 type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
 
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 function handleFileUpload(data: FileUploadData) {
-   if (!data.file.fullPath) return;
-   const url = URL.createObjectURL(data.file.file!);
-   loadImage(url).then((e) => {
-      projectStore.createMaterial(data.file.fullPath!, e);
-   });
+   if (!data.file.file) return;
+   projectStore.createMaterial(data.file.file.name, data.file.file);
 }
 
 function toggleShowMatrixId() {

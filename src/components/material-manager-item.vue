@@ -9,7 +9,6 @@
                   loading="lazy"
                   class="object-contain w-full h-full"
                />
-               <NSpin v-else></NSpin>
                <NText class="matrix-id font-bold absolute shadow">
                   {{ material.matrixId }}
                </NText>
@@ -53,7 +52,7 @@
                <NSelect
                   :options="rotationOptions"
                   class="min-w-[300px]"
-                  v-model:value="material.rotation"
+                  v-model:value="rotation"
                >
                </NSelect>
             </div>
@@ -67,10 +66,10 @@
                </NSelect>
             </div>
             <div class="flex flex-col">
-               <NCheckbox v-model:checked="material.isHorizontallyFlipped">
+               <NCheckbox v-model:checked="isHorizontallyFlipped">
                   Flip horizontally
                </NCheckbox>
-               <NCheckbox v-model:checked="material.isVerticallyFlipped">
+               <NCheckbox v-model:checked="isVerticallyFlipped">
                   Flip vertically
                </NCheckbox>
             </div>
@@ -82,7 +81,6 @@
                loading="lazy"
                class="object-contain w-full h-full"
             />
-            <NSpin v-else></NSpin>
          </div>
       </div>
    </NCollapseItem>
@@ -97,11 +95,9 @@ import {
    NInput,
    NDivider,
    NSelect,
-   NSpin,
 } from "naive-ui";
-import type { Material } from "../types";
-import { computedAsync } from "@vueuse/core";
-import { getTransformedMaterialImage } from "../utils/material-utils";
+import type { Material, MaterialRotation } from "../types";
+import { computed, ref, watch } from "vue";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { useProjectStore } from "../store/project";
 
@@ -109,6 +105,10 @@ const projectStore = useProjectStore();
 const props = defineProps<{
    material: Material;
 }>();
+
+const materialTransformedImg = computed(() => {
+   return props.material.texture.getImageCanvasURL();
+});
 
 const rotationOptions: SelectMixedOption[] = [
    {
@@ -166,13 +166,19 @@ const positionOriginOptions: SelectMixedOption[] = [
    },
 ];
 
-const materialTransformedImg = computedAsync(async () => {
-   return (
-      await getTransformedMaterialImage(
-         props.material,
-         props.material.image.width,
-         props.material.image.height
-      )
-   ).toDataURL();
+const isHorizontallyFlipped = ref(false);
+const isVerticallyFlipped = ref(false);
+const rotation = ref<MaterialRotation>(0);
+
+watch(isHorizontallyFlipped, (v) => {
+   props.material.texture.setHorizontallyFlipped(v);
+});
+
+watch(isVerticallyFlipped, (v) => {
+   props.material.texture.setVerticallyFlipped(v);
+});
+
+watch(rotation, (v) => {
+   props.material.texture.setRotation(v);
 });
 </script>

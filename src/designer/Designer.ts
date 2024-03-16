@@ -6,7 +6,6 @@ import { useDesignerStore } from "../store/designer";
 import { clamp } from "../utils/clamp";
 import { Layer, Material } from "../types";
 import { getTotalHeight, getTotalWidth } from "../utils/layer-utils";
-import { getTransformedMaterialImage } from "../utils/material-utils";
 import { useSettingsStore } from "../store/settings";
 
 const { x: mouseX, y: mouseY } = useMouse();
@@ -128,7 +127,7 @@ export class Designer {
                const x = colIndex * tileSize;
                const y = rowIndex * tileSize;
                ctx.drawImage(
-                  material.transformedImage,
+                  material.texture.getImageCanvas(),
                   x,
                   y,
                   tileSize,
@@ -141,9 +140,9 @@ export class Designer {
 
    private getTransformedImageInfo(material: Material) {
       const tileSize = this.projectStore.tileSize || 1;
-      const image = material.transformedImage;
-      const width = material.transformedImageWidth;
-      const height = material.transformedImageHeight;
+      const image = material.texture.getImageCanvas();
+      const width = image.width;
+      const height = image.height;
 
       // center
       let x = -width / 2 + tileSize / 2;

@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
 import MiniSearch from "minisearch";
+import { MaterialTexture } from "../utils/MaterialTexture";
 
 export const useProjectStore = defineStore("project", () => {
    const _filename = ref("untitled project");
@@ -87,22 +88,20 @@ export const useProjectStore = defineStore("project", () => {
       return materialsMap.get(matrixId);
    }
 
-   function createMaterial(name: string, image: HTMLImageElement) {
+   function createMaterial(
+      name: string,
+      textureBase: string | File | HTMLImageElement
+   ) {
+      const texture = reactive(new MaterialTexture()) as MaterialTexture;
       const material: Material = {
          id: generateId(),
          name,
-         image,
-         imageSrc: image.src,
-         isHorizontallyFlipped: false,
-         isVerticallyFlipped: false,
          matrixId: "0",
-         rotation: 0,
-         transformedImage: image,
-         transformedImageWidth: image.width,
-         transformedImageHeight: image.height,
          positionOrigin: "center",
+         texture: texture,
       };
       _materials.unshift(material);
+      texture.init(textureBase);
       return material;
    }
 

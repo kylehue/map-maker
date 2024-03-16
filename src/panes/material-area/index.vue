@@ -60,7 +60,6 @@ import { PhUpload } from "@phosphor-icons/vue";
 import Navbar from "./navbar.vue";
 import Material from "./material-item.vue";
 import { useProjectStore } from "../../store/project";
-import { loadImage } from "../../utils/material-utils";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useSettingsStore } from "../../store/settings";
 import { useContextMenu } from "../../composables/use-context-menu";
@@ -121,11 +120,8 @@ function handleRightClick(e: MouseEvent) {
 }
 
 function handleFileUpload(data: FileUploadData) {
-   if (!data.file.fullPath) return;
-   const url = URL.createObjectURL(data.file.file!);
-   loadImage(url).then((e) => {
-      projectStore.createMaterial(data.file.fullPath!, e);
-   });
+   if (!data.file.file) return;
+   projectStore.createMaterial(data.file.file.name, data.file.file);
 }
 
 onMounted(() => {
