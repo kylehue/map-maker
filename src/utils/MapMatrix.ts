@@ -100,6 +100,10 @@ export class MapMatrix {
    toString() {
       return this.matrix.map((v) => v.join(" ")).join("\n");
    }
+
+   fromString(matrixStr: string, separator = " ") {
+      this.matrix = matrixStr.split("\n").map((v) => v.split(separator));
+   }
 }
 
 (window as any).MapMatrix = MapMatrix;
