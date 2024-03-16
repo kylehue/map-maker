@@ -8,6 +8,12 @@ export interface Project {
 }
 
 export type MaterialRotation = 90 | 180 | -90 | -180 | 0;
+export type MaterialPositionOrigin =
+   | "top"
+   | "bottom"
+   | "left"
+   | "right"
+   | "center";
 
 export interface Material {
    id: string;
@@ -18,6 +24,10 @@ export interface Material {
    isHorizontallyFlipped: boolean;
    isVerticallyFlipped: boolean;
    image: HTMLImageElement;
+   transformedImage: CanvasImageSource;
+   transformedImageWidth: number;
+   transformedImageHeight: number;
+   positionOrigin: MaterialPositionOrigin;
 }
 
 export interface Layer {
@@ -25,6 +35,7 @@ export interface Layer {
    name: string;
    isVisible: boolean;
    isLocked: boolean;
+   matrix: string[][];
 }
 
 export type Tool = "move" | "select" | "brush" | "eraser" | "paint-bucket";

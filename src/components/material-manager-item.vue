@@ -5,7 +5,7 @@
             <div class="relative flex items-center justify-center size-16">
                <img
                   v-if="materialTransformedImg"
-                  :src="materialTransformedImg.src"
+                  :src="materialTransformedImg"
                   loading="lazy"
                   class="object-contain w-full h-full"
                />
@@ -57,17 +57,28 @@
                >
                </NSelect>
             </div>
-            <NCheckbox v-model:checked="material.isHorizontallyFlipped">
-               Flip horizontally
-            </NCheckbox>
-            <NCheckbox v-model:checked="material.isVerticallyFlipped">
-               Flip vertically
-            </NCheckbox>
+            <div class="flex flex-col w-fit">
+               <NText>Position Origin</NText>
+               <NSelect
+                  :options="positionOriginOptions"
+                  class="min-w-[300px]"
+                  v-model:value="material.positionOrigin"
+               >
+               </NSelect>
+            </div>
+            <div class="flex flex-col">
+               <NCheckbox v-model:checked="material.isHorizontallyFlipped">
+                  Flip horizontally
+               </NCheckbox>
+               <NCheckbox v-model:checked="material.isVerticallyFlipped">
+                  Flip vertically
+               </NCheckbox>
+            </div>
          </div>
          <div class="relative size-32 flex items-center justify-center">
             <img
                v-if="materialTransformedImg"
-               :src="materialTransformedImg.src"
+               :src="materialTransformedImg"
                loading="lazy"
                class="object-contain w-full h-full"
             />
@@ -127,11 +138,41 @@ const rotationOptions: SelectMixedOption[] = [
    },
 ];
 
-const materialTransformedImg = computedAsync(() => {
-   return getTransformedMaterialImage(
-      props.material,
-      props.material.image.width,
-      props.material.image.height
-   );
+const positionOriginOptions: SelectMixedOption[] = [
+   {
+      key: "top",
+      value: "top",
+      label: "top",
+   },
+   {
+      key: "right",
+      value: "right",
+      label: "right",
+   },
+   {
+      key: "bottom",
+      value: "bottom",
+      label: "bottom",
+   },
+   {
+      key: "left",
+      value: "left",
+      label: "left",
+   },
+   {
+      key: "center",
+      value: "center",
+      label: "center",
+   },
+];
+
+const materialTransformedImg = computedAsync(async () => {
+   return (
+      await getTransformedMaterialImage(
+         props.material,
+         props.material.image.width,
+         props.material.image.height
+      )
+   ).toDataURL();
 });
 </script>

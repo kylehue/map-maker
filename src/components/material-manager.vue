@@ -38,7 +38,7 @@
                   class="flex flex-col absolute overflow-auto w-full h-full pt-16"
                >
                   <NCollapse
-                     class="flex flex-col overflow-auto h-full px-4"
+                     class="flex flex-col overflow-auto h-full px-4 pb-8"
                      :trigger-areas="['main', 'arrow']"
                      :expanded-names="focusedMaterial?.id"
                   >

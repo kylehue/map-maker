@@ -5,7 +5,7 @@ import { postAsync } from "./worker-utils";
 
 const worker = new MaterialWorker();
 
-const map: Record<string, HTMLImageElement> = {};
+const map: Record<string, HTMLCanvasElement> = {};
 const loadedImageMap: Record<string, HTMLImageElement> = {};
 
 function createMaterialTransformationKey(
@@ -44,21 +44,12 @@ export async function loadImage(src: string) {
 }
 
 function imageDataToImage(imageData: ImageData) {
-   return new Promise<HTMLImageElement>((resolve, reject) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d")!;
-      canvas.width = imageData.width;
-      canvas.height = imageData.height;
-      ctx.putImageData(imageData, 0, 0);
-      const image = new Image();
-      image.src = canvas.toDataURL();
-      image.onload = (e) => {
-         resolve(image);
-      };
-      image.onerror = (e) => {
-         reject(e);
-      };
-   });
+   const canvas = document.createElement("canvas");
+   const ctx = canvas.getContext("2d")!;
+   canvas.width = imageData.width;
+   canvas.height = imageData.height;
+   ctx.putImageData(imageData, 0, 0);
+   return canvas;
 }
 
 export async function getTransformedMaterialImage(
@@ -82,7 +73,10 @@ export async function getTransformedMaterialImage(
       imageData,
    });
 
-   const image = await imageDataToImage(res.data.imageData);
+   const image = imageDataToImage(res.data.imageData);
    map[key] = image;
+   material.transformedImage = image;
+   material.transformedImageWidth = image.width;
+   material.transformedImageHeight = image.height;
    return image;
 }

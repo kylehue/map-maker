@@ -12,7 +12,7 @@
          >
             <img
                v-if="materialTransformedImg"
-               :src="materialTransformedImg.src"
+               :src="materialTransformedImg"
                loading="lazy"
                class="object-contain w-full h-full"
             />
@@ -47,17 +47,16 @@ const props = defineProps<{
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
-const materialTransformedImg = computedAsync(
-   () => {
-      return getTransformedMaterialImage(
+
+const materialTransformedImg = computedAsync(async () => {
+   return (
+      await getTransformedMaterialImage(
          props.material,
          props.material.image.width,
          props.material.image.height
-      );
-   },
-   null,
-   { lazy: true }
-);
+      )
+   ).toDataURL();
+});
 
 enum MaterialContextMenu {
    OPEN_IN_MANAGER,

@@ -14,6 +14,7 @@ export const useProjectStore = defineStore("project", () => {
    const _selectedMaterial = ref<Material>();
    const _emptyMatrixId = ref(".");
    const _matrixSeparator = ref(" ");
+   const materialsMap = new Map<string, Material>();
 
    const _materialsSearcher = new MiniSearch({
       fields: ["matrixId", "name"],
@@ -30,6 +31,12 @@ export const useProjectStore = defineStore("project", () => {
    let _materialsSearcherNeedsUpdate = true;
    watch(_materials, (_materials) => {
       _materialsSearcherNeedsUpdate = true;
+
+      // update hashmap
+      materialsMap.clear();
+      for (const material of _materials) {
+         materialsMap.set(material.matrixId, material);
+      }
    });
 
    function duplicateLayer(layer: Layer) {
@@ -62,6 +69,7 @@ export const useProjectStore = defineStore("project", () => {
          name,
          isLocked: false,
          isVisible: true,
+         matrix: [],
       });
    }
 
@@ -75,6 +83,10 @@ export const useProjectStore = defineStore("project", () => {
       if (isSelected) setSelectedLayer(layer);
    }
 
+   function getMaterialByMatrixId(matrixId: string) {
+      return materialsMap.get(matrixId);
+   }
+
    function createMaterial(name: string, image: HTMLImageElement) {
       const material: Material = {
          id: generateId(),
@@ -85,8 +97,13 @@ export const useProjectStore = defineStore("project", () => {
          isVerticallyFlipped: false,
          matrixId: "0",
          rotation: 0,
+         transformedImage: image,
+         transformedImageWidth: image.width,
+         transformedImageHeight: image.height,
+         positionOrigin: "center",
       };
       _materials.unshift(material);
+      return material;
    }
 
    function duplicateMaterial(material: Material) {
@@ -176,6 +193,7 @@ export const useProjectStore = defineStore("project", () => {
       moveLayer,
       setFilename,
       materials,
+      getMaterialByMatrixId,
       createMaterial,
       duplicateMaterial,
       deleteMaterial,

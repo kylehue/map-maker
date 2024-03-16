@@ -4,6 +4,10 @@ import { Camera } from "./Camera";
 import { pointToAABBCollision } from "./utils";
 import { useDesignerStore } from "../store/designer";
 import { clamp } from "../utils/clamp";
+import { Layer, Material } from "../types";
+import { getTotalHeight, getTotalWidth } from "../utils/layer-utils";
+import { getTransformedMaterialImage } from "../utils/material-utils";
+import { useSettingsStore } from "../store/settings";
 
 const { x: mouseX, y: mouseY } = useMouse();
 
@@ -13,6 +17,7 @@ export class Designer {
    private readonly camera = new Camera(this.context);
    private readonly designerStore = useDesignerStore();
    private readonly projectStore = useProjectStore();
+   private readonly settingsStore = useSettingsStore();
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
    private fps = 50;
 
@@ -32,7 +37,7 @@ export class Designer {
          }, 1000 / this.fps);
       };
       tick();
-      
+
       addEventListener("resize", () => {
          this.canvasBounds = this.canvas.getBoundingClientRect();
       });
@@ -77,50 +82,107 @@ export class Designer {
       return [col, row];
    }
 
-   private drawTiles() {
+   private drawTiles(layer: Layer) {
       const ctx = this.context;
-      const size = this.projectStore.tileSize || 1;
+      const tileSize = this.projectStore.tileSize || 1;
 
-      const offset = 4;
-      const rowStart = ~~(this.camera.viewport.top / size) - offset;
-      const rowEnd = ~~(this.camera.viewport.bottom / size) + offset;
-      const colStart = ~~(this.camera.viewport.left / size) - offset;
-      const colEnd = ~~(this.camera.viewport.right / size) + offset;
+      const totalWidth = getTotalWidth(layer, tileSize);
+      const totalHeight = getTotalHeight(layer, tileSize);
+
+      const renderTileViewportOffset = 4;
+      const rowStart =
+         Math.ceil((this.camera.viewport.top + totalHeight / 2) / tileSize) +
+         1 -
+         renderTileViewportOffset;
+      const rowEnd =
+         Math.floor(
+            (this.camera.viewport.bottom + totalHeight / 2) / tileSize
+         ) + renderTileViewportOffset;
+      const colStart =
+         Math.ceil((this.camera.viewport.left + totalWidth / 2) / tileSize) +
+         1 -
+         renderTileViewportOffset;
+      const colEnd =
+         Math.floor((this.camera.viewport.right + totalWidth / 2) / tileSize) +
+         renderTileViewportOffset;
 
       // draw tiles
-      ctx.lineWidth = 0.5;
-      for (let rowIndex = rowStart; rowIndex < rowEnd; rowIndex++) {
-         for (let colIndex = colStart; colIndex < colEnd; colIndex++) {
-            let tileIsEmpty = true; // TODO: change this
+      for (
+         let rowIndex = Math.max(0, rowStart);
+         rowIndex < Math.min(layer.matrix.length, rowEnd);
+         rowIndex++
+      ) {
+         const row = layer.matrix[rowIndex];
+         for (
+            let colIndex = Math.max(0, colStart);
+            colIndex < Math.min(row.length, colEnd);
+            colIndex++
+         ) {
+            const matrixId = row[colIndex];
+            const tileIsEmpty = matrixId === this.projectStore.emptyMatrixId;
 
-            const x = colIndex * size;
-            const y = rowIndex * size;
-            if (tileIsEmpty) {
-               // draw empty tile
-               ctx.beginPath();
-               ctx.rect(x, y, size, size);
-               ctx.strokeStyle = this.settings.gridColor;
-               ctx.stroke();
-
-               ctx.closePath();
-            } else {
-               // draw actual tile
-            }
-
-            const { x: mx, y: my } = this.getMouse();
-            const isMouseOver = pointToAABBCollision(mx, my, {
-               x,
-               y,
-               width: size,
-               height: size,
-            });
-            if (isMouseOver) {
-               ctx.rect(x, y, size, size);
-               ctx.fillStyle = this.settings.tileHoverColor;
-               ctx.fill();
+            if (!tileIsEmpty) {
+               const material =
+                  this.projectStore.getMaterialByMatrixId(matrixId);
+               if (!material) continue;
+               const x = colIndex * tileSize;
+               const y = rowIndex * tileSize;
+               ctx.drawImage(
+                  material.transformedImage,
+                  x,
+                  y,
+                  tileSize,
+                  tileSize
+               );
             }
          }
       }
+   }
+
+   private getTransformedImageInfo(material: Material) {
+      const tileSize = this.projectStore.tileSize || 1;
+      const image = material.transformedImage;
+      const width = material.transformedImageWidth;
+      const height = material.transformedImageHeight;
+
+      // center
+      let x = -width / 2 + tileSize / 2;
+      let y = -height / 2 + tileSize / 2;
+
+      switch (material.positionOrigin) {
+         case "top":
+            y += height / 2 - tileSize / 2;
+            break;
+         case "bottom":
+            y -= height / 2 - tileSize / 2;
+            break;
+         case "right":
+            x -= width / 2 - tileSize / 2;
+            break;
+         case "left":
+            x += width / 2 - tileSize / 2;
+            break;
+      }
+
+      return { image, width, height, x, y };
+   }
+
+   private drawTarget() {
+      const ctx = this.context;
+      if (!this.projectStore.selectedMaterial) return;
+      const [col, row] = this.getMouseColumnRow();
+      const tileSize = this.projectStore.tileSize || 1;
+      const { image, x, y } = this.getTransformedImageInfo(
+         this.projectStore.selectedMaterial
+      );
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.drawImage(image, col * tileSize + x, row * tileSize + y);
+      ctx.restore();
+   }
+
+   private drawGrid() {
+      const ctx = this.context;
 
       // draw center x & y lines
       ctx.beginPath();
@@ -131,6 +193,30 @@ export class Designer {
       ctx.strokeStyle = this.settings.centerGridColor;
       ctx.stroke();
       ctx.closePath();
+
+      // draw grid
+      const tileSize = this.projectStore.tileSize || 1;
+      const rowStart = ~~(this.camera.viewport.top / tileSize) - 4;
+      const rowEnd = ~~(this.camera.viewport.bottom / tileSize) + 4;
+      const colStart = ~~(this.camera.viewport.left / tileSize) - 4;
+      const colEnd = ~~(this.camera.viewport.right / tileSize) + 4;
+      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = this.settings.gridColor;
+      for (let rowIndex = rowStart; rowIndex < rowEnd; rowIndex++) {
+         ctx.beginPath();
+         ctx.moveTo(this.camera.viewport.left, rowIndex * tileSize);
+         ctx.lineTo(this.camera.viewport.right, rowIndex * tileSize);
+         ctx.closePath();
+         ctx.stroke();
+      }
+
+      for (let colIndex = colStart; colIndex < colEnd; colIndex++) {
+         ctx.beginPath();
+         ctx.moveTo(colIndex * tileSize, this.camera.viewport.top);
+         ctx.lineTo(colIndex * tileSize, this.camera.viewport.bottom);
+         ctx.closePath();
+         ctx.stroke();
+      }
    }
 
    public repaint() {
@@ -142,7 +228,13 @@ export class Designer {
       const zoom = this.designerStore.zoom;
       this.camera.moveTo(position.x, position.y);
       this.camera.zoomTo(zoom);
-      this.drawTiles();
+
+      for (const layer of this.projectStore.layers) {
+         this.drawTiles(layer);
+      }
+
+      this.drawGrid();
+      this.drawTarget();
 
       this.camera.end();
    }
