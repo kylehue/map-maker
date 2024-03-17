@@ -10,6 +10,7 @@ export const useDesignerStore = defineStore("designer", () => {
    const projectStore = useProjectStore();
    const _zoom = ref(1000);
    const _position = reactive(new Vector());
+   const _isFullScreen = ref(false);
    const _maxTiles = ref(50);
    const _minTiles = ref(5);
    const _activeTool = ref<Tool>("move");
@@ -43,12 +44,27 @@ export const useDesignerStore = defineStore("designer", () => {
       _activeTool.value = s;
    }
 
+   function resetView() {
+      _zoom.value = 1000;
+      centerView();
+   }
+
+   function centerView() {
+      _position.x = 0;
+      _position.y = 0;
+   }
+
+   function setFullScreen(v: boolean) {
+      _isFullScreen.value = v;
+   }
+
    const zoom = computed(() => _zoom.value);
    const position = computed(() => _position);
    const minTiles = computed(() => _minTiles.value);
    const maxTiles = computed(() => _maxTiles.value);
    const activeTool = computed(() => _activeTool.value);
    const designer = computed(() => _designer.value);
+   const isFullScreen = computed(() => _isFullScreen.value);
 
    return {
       designer,
@@ -62,5 +78,9 @@ export const useDesignerStore = defineStore("designer", () => {
       setMinTiles,
       activeTool,
       setActiveTool,
+      resetView,
+      centerView,
+      isFullScreen,
+      setFullScreen,
    };
 });

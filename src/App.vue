@@ -2,16 +2,26 @@
    <MaterialManager></MaterialManager>
    <ContextMenu></ContextMenu>
    <div class="flex flex-col w-screen h-screen">
-      <div class="navbar flex w-screen h-10 flex-shrink-0 items-center">
+      <div
+         v-if="!designerStore.isFullScreen"
+         class="navbar flex w-screen h-10 flex-shrink-0 items-center"
+      >
          <Navbar></Navbar>
       </div>
       <div class="body flex flex-auto">
          <div class="flex flex-col flex-auto w-full">
             <Splitpanes>
-               <Pane class="min-w-5 overflow-hidden" :size="70">
+               <Pane
+                  class="min-w-5 overflow-hidden"
+                  :size="designerStore.isFullScreen ? 100 : 70"
+               >
                   <DesignArea></DesignArea>
                </Pane>
-               <Pane class="min-w-5 overflow-hidden" :size="30">
+               <Pane
+                  v-if="!designerStore.isFullScreen"
+                  class="min-w-5 overflow-hidden"
+                  :size="30"
+               >
                   <Splitpanes class="flex flex-col h-full" horizontal>
                      <Pane
                         v-if="settingsStore.window.showMatrix"
@@ -62,10 +72,19 @@ import LayerArea from "./panes/layer-area/index.vue";
 import { useSettingsStore } from "./store/settings";
 import ContextMenu from "./components/context-menu.vue";
 import MaterialManager from "./components/material-manager.vue";
+import { useDesignerStore } from "./store/designer";
 
 const settingsStore = useSettingsStore();
+const designerStore = useDesignerStore();
 const theme = useThemeVars();
 </script>
+
+<style>
+:root {
+   --n-option-text-color-active: yellow;
+   --n-option-color-active: yellow;
+}
+</style>
 
 <style lang="scss" scoped>
 :deep(.n-tabs),

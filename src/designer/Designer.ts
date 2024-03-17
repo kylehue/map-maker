@@ -32,8 +32,8 @@ export class Designer {
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
       centerGridColor: "rgba(125, 125, 125, 0.3)",
-      tileHoverColor: "rgba(129, 230, 155, 0.2)",
-      mapBoundsColor: "rgb(200, 10, 40)"
+      highlight: "rgba(125, 125, 125, 0.5)",
+      mapBoundsColor: "rgb(200, 10, 40)",
    };
 
    constructor() {
@@ -166,14 +166,26 @@ export class Designer {
                const material =
                   this.projectStore.getMaterialByMatrixId(matrixId);
                if (!material) continue;
-               const {
-                  image,
-                  x: tx,
-                  y: ty,
-               } = this.getTransformedImageInfo(material);
                const x = colIndex * tileSize - totalWidth / 2;
                const y = rowIndex * tileSize - totalHeight / 2;
-               ctx.drawImage(image, x + tx, y + ty);
+               if (this.settingsStore.designerArea.showMaterial) {
+                  const {
+                     image,
+                     x: tx,
+                     y: ty,
+                  } = this.getTransformedImageInfo(material);
+                  ctx.drawImage(image, x + tx, y + ty);
+               }
+               if (this.settingsStore.designerArea.showMatrixId) {
+                  this.writeText(
+                     material.matrixId,
+                     x + tileSize / 2,
+                     y + tileSize / 2,
+                     this.settingsStore.designerArea.showMaterial
+                        ? "white"
+                        : this.settings.highlight
+                  );
+               }
             }
          }
       }
@@ -233,7 +245,7 @@ export class Designer {
       const [col, row] = this.getMouseColumnRow();
       ctx.beginPath();
       ctx.rect(col * tileSize, row * tileSize, tileSize, tileSize);
-      ctx.strokeStyle = this.settings.centerGridColor;
+      ctx.strokeStyle = this.settings.highlight;
       ctx.stroke();
       ctx.closePath();
    }
@@ -297,12 +309,17 @@ export class Designer {
       this.writeText("0x0", tileSize / 2, tileSize / 2);
    }
 
-   private writeText(text: string, x: number, y: number) {
+   private writeText(
+      text: string | number,
+      x: number,
+      y: number,
+      color = this.settings.gridColor
+   ) {
       const ctx = this.context;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = this.settings.gridColor;
-      ctx.fillText(text, x, y);
+      ctx.fillStyle = color;
+      ctx.fillText(text.toString(), x, y);
    }
 
    public repaint() {
@@ -321,10 +338,10 @@ export class Designer {
          this.drawTiles(layer);
       }
 
-      this.drawGrid();
+      if (this.settingsStore.designerArea.showGrid) this.drawGrid();
+      if (this.settingsStore.designerArea.showMapBounds) this.drawMapBounds();
       this.drawTarget();
       this.drawMaterialTarget();
-      this.drawMapBounds();
       this.initTooling();
 
       this.camera.end();

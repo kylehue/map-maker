@@ -3,7 +3,12 @@
       <div class="flex items-center *:!text-xs">
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  v-show="!designerStore.isFullScreen"
+                  size="tiny"
+                  quaternary
+                  circle
+               >
                   <template #icon>
                      <PhArrowCounterClockwise />
                   </template>
@@ -13,7 +18,12 @@
          </NTooltip>
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  v-show="!designerStore.isFullScreen"
+                  size="tiny"
+                  quaternary
+                  circle
+               >
                   <template #icon>
                      <PhArrowClockwise />
                   </template>
@@ -22,6 +32,7 @@
             Redo <span class="opacity-70">(Ctrl+Shift+Z)</span>
          </NTooltip>
          <n-menu
+            v-if="!designerStore.isFullScreen"
             v-model:value="navActiveKey"
             mode="horizontal"
             :options="navOptions"
@@ -31,6 +42,7 @@
                arrowPointToCenter: true,
                showArrow: true,
             }"
+            :inverted="false"
          />
       </div>
       <div class="flex items-center">
@@ -67,7 +79,14 @@
          </NTooltip>
          <NTooltip animated>
             <template #trigger>
-               <NButton size="tiny" quaternary circle>
+               <NButton
+                  size="tiny"
+                  quaternary
+                  circle
+                  @click="
+                     designerStore.setFullScreen(!designerStore.isFullScreen)
+                  "
+               >
                   <template #icon>
                      <PhCornersOut />
                   </template>
@@ -81,7 +100,7 @@
 
 <script setup lang="ts">
 import { NMenu, NButton, NTooltip, MenuOption } from "naive-ui";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import {
    PhMagnifyingGlass,
    PhArrowsOutCardinal,
@@ -89,15 +108,16 @@ import {
    PhArrowCounterClockwise,
    PhArrowClockwise,
 } from "@phosphor-icons/vue";
-import { map } from "../../utils/map";
 import { useDesignerStore } from "../../store/designer";
+import { useSettingsStore } from "../../store/settings";
 
 enum Navigation {
    DISPLAY_DROPDOWN,
    VIEW_DROPDOWN,
    SHOW_GRID,
-   SHOW_MATRIX_POSITION,
+   SHOW_MATRIX_ID,
    SHOW_MATERIAL,
+   SHOW_MAP_BOUNDS,
    RESET_VIEW,
    CENTER_VIEW,
 }
@@ -124,20 +144,35 @@ const navOptions: MenuOption[] = [
       children: [
          {
             key: Navigation.SHOW_GRID,
-            label: "Show Grid",
+            label: () =>
+               `${settingsStore.designerArea.showGrid ? "Hide" : "Show"} Grid`,
          },
          {
-            key: Navigation.SHOW_MATRIX_POSITION,
-            label: "Show Matrix Position",
+            key: Navigation.SHOW_MATRIX_ID,
+            label: () =>
+               `${
+                  settingsStore.designerArea.showMatrixId ? "Hide" : "Show"
+               } Matrix ID`,
          },
          {
             key: Navigation.SHOW_MATERIAL,
-            label: "Show Material",
+            label: () =>
+               `${
+                  settingsStore.designerArea.showMaterial ? "Hide" : "Show"
+               } Material`,
+         },
+         {
+            key: Navigation.SHOW_MAP_BOUNDS,
+            label: () =>
+               `${
+                  settingsStore.designerArea.showMapBounds ? "Hide" : "Show"
+               } Map Bounds`,
          },
       ],
    },
 ];
 
+const settingsStore = useSettingsStore();
 const designerStore = useDesignerStore();
 const zoomViewportButton = ref();
 function moveDesigner(x: number, y: number) {
@@ -151,4 +186,34 @@ function zoomDesigner(x: number, y: number) {
    designerStore.addZoom(-(x + y) * 4);
    designerStore.designer?.setFPS(60);
 }
+
+watch(navActiveKey, (e) => {
+   if (e == undefined) return;
+   switch (e) {
+      case Navigation.SHOW_GRID:
+         settingsStore.designerArea.showGrid =
+            !settingsStore.designerArea.showGrid;
+         break;
+      case Navigation.SHOW_MATERIAL:
+         settingsStore.designerArea.showMaterial =
+            !settingsStore.designerArea.showMaterial;
+         break;
+      case Navigation.SHOW_MAP_BOUNDS:
+         settingsStore.designerArea.showMapBounds =
+            !settingsStore.designerArea.showMapBounds;
+         break;
+      case Navigation.SHOW_MATRIX_ID:
+         settingsStore.designerArea.showMatrixId =
+            !settingsStore.designerArea.showMatrixId;
+         break;
+      case Navigation.CENTER_VIEW:
+         designerStore.centerView();
+         break;
+      case Navigation.RESET_VIEW:
+         designerStore.resetView();
+         break;
+   }
+
+   navActiveKey.value = undefined;
+});
 </script>

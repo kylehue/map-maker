@@ -41,5 +41,6 @@ textarea {
    background: none !important;
    text-wrap: nowrap !important;
    border-radius: 5px;
+   line-height: 1 !important;
 }
 </style>

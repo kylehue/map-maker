@@ -1,7 +1,7 @@
 <template>
    <div class="flex w-full h-full cursor-none" ref="canvasContainer">
       <div
-         class="absolute flex items-center justify-center pointer-events-none "
+         class="absolute flex items-center justify-center pointer-events-none"
          :style="{
             transform: `translate(${x - left}px,${y - top}px)`,
          }"
@@ -71,7 +71,14 @@ watch(
    }
 );
 
-onMounted(() => {
-   canvasContainer.value?.appendChild(designerStore.designer!.canvas);
-});
+watch(
+   () => designerStore.designer,
+   (designer) => {
+      if (!designer) return;
+      canvasContainer.value?.appendChild(designer.canvas);
+   },
+   {
+      once: true,
+   }
+);
 </script>
