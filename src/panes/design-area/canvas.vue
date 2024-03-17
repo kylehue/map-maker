@@ -1,12 +1,12 @@
 <template>
    <div class="flex w-full h-full cursor-none" ref="canvasContainer">
       <div
-         class="absolute flex items-center justify-center pointer-events-none"
+         class="absolute flex items-center justify-center pointer-events-none "
          :style="{
             transform: `translate(${x - left}px,${y - top}px)`,
          }"
       >
-         <NIcon size="large">
+         <NIcon size="large" :color="theme.textColor1">
             <component :is="toolIcon" />
          </NIcon>
       </div>
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { NIcon } from "naive-ui";
+import { NIcon, useThemeVars } from "naive-ui";
 import { computed, h, onMounted, reactive, ref, watch } from "vue";
 import { useElementBounding, useElementSize, useMouse } from "@vueuse/core";
 import { useDesignerStore } from "../../store/designer";
@@ -33,6 +33,7 @@ const designerStore = useDesignerStore();
 const { x, y } = useMouse({
    target: canvasContainer,
 });
+const theme = useThemeVars();
 
 const toolIcon = computed(() => {
    const tool = designerStore.activeTool;
