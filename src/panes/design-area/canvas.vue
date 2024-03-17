@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { NIcon, useThemeVars } from "naive-ui";
+import { NIcon, useMessage, useThemeVars } from "naive-ui";
 import { computed, h, onMounted, reactive, ref, watch } from "vue";
 import { useElementBounding, useElementSize, useMouse } from "@vueuse/core";
 import { useDesignerStore } from "../../store/designer";
@@ -25,6 +25,7 @@ import {
    PhEraser,
    PhPaintBucket,
 } from "@phosphor-icons/vue";
+import { useProjectStore } from "../../store/project";
 
 const canvasContainer = ref<HTMLDivElement>();
 const canvasContainerSize = useElementSize(canvasContainer);
@@ -63,6 +64,22 @@ const toolIcon = computed(() => {
    }
 });
 
+const projectStore = useProjectStore();
+const message = useMessage();
+function handleCanvasMouseDown() {
+   const tool = designerStore.activeTool;
+   const layer = projectStore.selectedLayer;
+   const material = projectStore.selectedMaterial;
+   if (
+      (tool == "brush" || tool == "eraser" || tool == "paint-bucket") &&
+      !layer
+   ) {
+      message.warning("Please select a layer.");
+   } else if ((tool == "brush" || tool == "paint-bucket") && !material) {
+      message.warning("Please select a material.");
+   }
+}
+
 watch(
    () => [canvasContainerSize.width.value, canvasContainerSize.height.value],
    ([width, height]) => {
@@ -76,6 +93,10 @@ watch(
    (designer) => {
       if (!designer) return;
       canvasContainer.value?.appendChild(designer.canvas);
+
+      designer.canvas.addEventListener("mousedown", () => {
+         handleCanvasMouseDown();
+      });
    },
    {
       once: true,
