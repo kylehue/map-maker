@@ -56,3 +56,25 @@ body {
       transform: scale(1);
    }
 }
+
+.n-menu-item-content--child-active {
+   color: white !important;
+}
+
+.n-dropdown-option-body--active {
+   color: inherit !important;
+}
+
+.n-dropdown-option-body--active::before {
+   background-color: transparent !important;
+}
+
+.n-dropdown-option-body--active:hover::before {
+   background-color: var(--n-option-color-hover) !important;
+}
+
+.n-menu.n-menu--horizontal
+   .n-menu-item-content.n-menu-item-content--child-active
+   .n-menu-item-content-header {
+   color: var(--n-item-text-color);
+}
