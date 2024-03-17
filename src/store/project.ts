@@ -1,11 +1,12 @@
 import { computed, reactive, ref, watch } from "vue";
-import type { Layer, Material, Project } from "../types";
+import type { Layer, Material } from "../types";
 import { defineStore } from "pinia";
 import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
 import MiniSearch from "minisearch";
 import { MaterialTexture } from "../utils/MaterialTexture";
 import { MapMatrix } from "../utils/MapMatrix";
+import { ProjectSaver } from "../utils/save";
 
 export const useProjectStore = defineStore("project", () => {
    const _filename = ref("untitled project");
@@ -29,6 +30,29 @@ export const useProjectStore = defineStore("project", () => {
          prefix: true,
       },
    });
+
+   // autosave
+   let stopAutosave: Function | null = null;
+   function autosave() {
+      stopAutosave = watch(
+         [
+            _filename,
+            _emptyMatrixId,
+            _matrixSeparator,
+            _layers,
+            _materials,
+            _tileSize,
+            _selectedLayer,
+            _selectedMaterial,
+         ],
+         () => {
+            ProjectSaver.save();
+         },
+         {
+            deep: true,
+         }
+      );
+   }
 
    let _materialsSearcherNeedsUpdate = true;
    watch(_materials, (_materials) => {
@@ -124,7 +148,6 @@ export const useProjectStore = defineStore("project", () => {
       for (let i = _materials.length - 1; i >= 0; i--) {
          if (_materials[i] !== material) continue;
          _materials.splice(i, 1);
-         _materialsSearcher.remove(material);
 
          if (material === _selectedMaterial.value) {
             _selectedMaterial.value = undefined;
@@ -176,6 +199,7 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function reset() {
+      stopAutosave?.call(null);
       _filename.value = "untitled project";
       _layers.length = 0;
       _materials.length = 0;
@@ -186,11 +210,17 @@ export const useProjectStore = defineStore("project", () => {
       _matrixSeparator.value = " ";
       materialsMap.clear();
       _materialsSearcher.removeAll();
-
       _selectedLayer.value = createLayer("Layer 1");
+      autosave();
+   }
+
+   async function setupNewProject() {
+      await ProjectSaver.resetSaver();
+      reset();
    }
 
    reset();
+   autosave();
 
    const filename = computed(() => _filename.value);
    const emptyMatrixId = computed(() => _emptyMatrixId.value);
@@ -226,5 +256,6 @@ export const useProjectStore = defineStore("project", () => {
       selectedMaterial,
       setSelectedMaterial,
       reset,
+      setupNewProject,
    };
 });

@@ -17,18 +17,30 @@
 </template>
 
 <script setup lang="ts">
-import { MenuOption, NInputNumber, NMenu, NText, useDialog } from "naive-ui";
+import {
+   MenuOption,
+   NButton,
+   NInputNumber,
+   NMenu,
+   NText,
+   useDialog,
+   useMessage,
+} from "naive-ui";
 import { h, reactive, ref, watch } from "vue";
 import ThemeSwitcher from "../components/theme-switcher.vue";
 import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
 import { PhStackSimple } from "@phosphor-icons/vue";
+import { ProjectSaver } from "../utils/save";
 
 enum Navigation {
    FILE_DROPDOWN,
    FILE_NEW_PROJECT,
    FILE_OPEN_FILES,
-   FILE_EXPORT,
+   FILE_SAVE_AS,
+   FILE_EXPORT_DROPDOWN,
+   EXPORT_MATRIX,
+   EXPORT_PNG,
    WINDOW_DROPDOWN,
    WINDOW_SHOW_MATRIX,
    WINDOW_SHOW_MATERIALS,
@@ -40,6 +52,7 @@ enum Navigation {
    EDIT_TILE_SIZE,
 }
 
+const message = useMessage();
 const dialog = useDialog();
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
@@ -55,11 +68,25 @@ const navOptions: MenuOption[] = [
          },
          {
             key: Navigation.FILE_OPEN_FILES,
-            label: "Open...",
+            label: "Open Project...",
          },
          {
-            key: Navigation.FILE_EXPORT,
-            label: "Export as...",
+            key: Navigation.FILE_SAVE_AS,
+            label: "Save as...",
+         },
+         {
+            key: Navigation.FILE_EXPORT_DROPDOWN,
+            label: "Export",
+            children: [
+               {
+                  key: Navigation.EXPORT_PNG,
+                  label: "Image (.png)",
+               },
+               {
+                  key: Navigation.EXPORT_MATRIX,
+                  label: "Matrix (.txt files)",
+               },
+            ],
          },
       ],
    },
@@ -77,7 +104,7 @@ const navOptions: MenuOption[] = [
          },
          {
             key: Navigation.EDIT_TILE_SIZE,
-            label: "Change tile size",
+            label: "Change tile size...",
          },
       ],
    },
@@ -114,7 +141,17 @@ const navOptions: MenuOption[] = [
 function handleSelect(e: Navigation) {
    switch (e) {
       case Navigation.FILE_NEW_PROJECT:
-         projectStore.reset();
+         confirmNewProject();
+         break;
+      case Navigation.FILE_OPEN_FILES:
+         openProject();
+         break;
+      case Navigation.FILE_SAVE_AS:
+         saveProject();
+         break;
+      case Navigation.EXPORT_MATRIX:
+         break;
+      case Navigation.EXPORT_PNG:
          break;
       case Navigation.EDIT_UNDO:
          break;
@@ -139,6 +176,61 @@ function handleSelect(e: Navigation) {
    }
 }
 
+const autosaveMessage = "Autosave has been enabled.";
+const noAutosaveMessage = "Autosave is not supported.";
+async function openProject() {
+   try {
+      await ProjectSaver.open();
+      if (!ProjectSaver.isWritableCached()) {
+         message.error(noAutosaveMessage, {
+            closable: true,
+            duration: 10000,
+         });
+      } else {
+         message.success(autosaveMessage, { closable: true, duration: 10000 });
+      }
+   } catch (e) {
+      message.error("Invalid file.");
+   }
+}
+
+async function saveProject() {
+   try {
+      await ProjectSaver.saveAs();
+      if (ProjectSaver.isWritableCached()) {
+         message.success(autosaveMessage, { closable: true, duration: 10000 });
+      } else {
+         message.error(noAutosaveMessage, {
+            closable: true,
+            duration: 10000,
+         });
+      }
+   } catch (e) {
+      message.error("Invalid file.");
+   }
+}
+
+function confirmNewProject() {
+   dialog.warning({
+      title: "New Project",
+      content: "Are you sure you want to create a new project?",
+      action() {
+         return h(
+            NButton,
+            {
+               secondary: true,
+               type: "warning",
+               onClick(e) {
+                  projectStore.setupNewProject();
+                  dialog.destroyAll();
+               },
+            },
+            () => "Yes"
+         );
+      },
+   });
+}
+
 function promptTileSize() {
    dialog.create({
       title: "Change tile size",
@@ -154,6 +246,7 @@ function promptTileSize() {
             }),
          ]);
       },
+      autoFocus: true,
    });
 }
 </script>

@@ -1,15 +1,6 @@
 import { MapMatrix } from "../utils/MapMatrix";
 import { MaterialTexture } from "../utils/MaterialTexture";
 
-export interface Project {
-   filename: string;
-   materials: Material[];
-   layers: Layer[];
-   tileSize: number;
-   selectedLayer?: Layer;
-   selectedMaterial?: Material;
-}
-
 export type MaterialRotation = 90 | 180 | -90 | -180 | 0;
 export type MaterialPositionOrigin =
    | "top"

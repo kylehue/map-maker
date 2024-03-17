@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, reactive } from "vue";
+import { computed, reactive, ref } from "vue";
 
 export const useSettingsStore = defineStore("settings", () => {
    const _window = reactive({

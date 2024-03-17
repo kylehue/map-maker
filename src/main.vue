@@ -1,8 +1,10 @@
 <template>
    <NConfigProvider :theme="themeToUse" :theme-overrides="themeOverrides">
-      <NDialogProvider>
-         <App></App>
-      </NDialogProvider>
+      <NMessageProvider>
+         <NDialogProvider>
+            <App></App>
+         </NDialogProvider>
+      </NMessageProvider>
    </NConfigProvider>
 </template>
 
@@ -11,6 +13,7 @@ import { BuiltInGlobalTheme } from "naive-ui/es/themes/interface";
 import {
    NConfigProvider,
    NDialogProvider,
+   NMessageProvider,
    darkTheme,
    lightTheme,
 } from "naive-ui";
