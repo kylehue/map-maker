@@ -21,8 +21,6 @@ export class Designer {
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
    private fps = 50;
    private isMouseDown = false;
-   private readonly registeredMatrixId: Record<string, Record<string, string>> =
-      {};
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
@@ -69,56 +67,8 @@ export class Designer {
       this.repaint();
    }
 
-   // private convertRegisteredMatrixIdsToArray(layer: Layer) {
-   //    const result: string[][] = [];
-   //    const registeredMatrixIds = this.registeredMatrixId[layer.id];
-   //    if (!registeredMatrixIds) return result;
-
-   //    let minRow = Infinity;
-   //    let minCol = Infinity;
-   //    for (const pos of Object.keys(registeredMatrixIds)) {
-   //       const [row, col] = pos.split(",").map((v) => parseInt(v));
-   //       minRow = row < minRow ? row : minRow;
-   //       minCol = col < minCol ? col : minCol;
-   //    }
-
-   //    const min = Math.min(minRow, minCol);
-   //    for (const [pos, matrixId] of Object.entries(registeredMatrixIds)) {
-   //       let [row, col] = pos.split(",").map((v) => parseInt(v));
-   //       row += min;
-   //       col += min;
-   //       result[row] ??= [];
-   //       result[row][col] = matrixId;
-   //    }
-
-   //    return result;
-   // }
-
-   // private registerMatrixId(
-   //    layer: Layer,
-   //    row: number,
-   //    column: number,
-   //    matrixId: string
-   // ) {
-   //    if (this.getRegisteredMatrixId(layer, row, column) === matrixId) return;
-
-   //    this.registeredMatrixId[layer.id] ??= {};
-   //    this.registeredMatrixId[layer.id][`${row},${column}`] = matrixId;
-
-   //    // update layer's matrix
-   //    layer.matrix = this.convertRegisteredMatrixIdsToArray(layer);
-   // }
-
-   // private getRegisteredMatrixId(layer: Layer, row: number, column: number) {
-   //    return this.registeredMatrixId[layer.id]?.[`${row},${column}`] as
-   //       | string
-   //       | undefined;
-   // }
-
    public initTooling() {
       let [col, row] = this.getMouseColumnRow();
-      row = row >= 0 ? row + 1 : row;
-      col = col >= 0 ? col + 1 : col;
 
       if (this.designerStore.activeTool == "brush") {
          const activeMaterial = this.projectStore.selectedMaterial;

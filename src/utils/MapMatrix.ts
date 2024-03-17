@@ -18,20 +18,13 @@ export class MapMatrix {
       return this.matrix.length * tileHeight;
    }
 
-   static getMirrors(row: number, col: number) {
-      return [
-         [row, col],
-         [-row, col],
-         [row, -col],
-         [-row, -col],
-      ] as [number, number][];
-   }
-
    getMatrix() {
       return this.matrix;
    }
 
    add(row: number, col: number, matrixId: string) {
+      row = row >= 0 ? row + 1 : row;
+      col = col >= 0 ? col + 1 : col;
       const top = -Math.ceil(this.matrix.length / 2);
       const bottom = Math.ceil(this.matrix.length / 2);
       const left = -Math.ceil((this.matrix[0]?.length || 0) / 2);
@@ -103,6 +96,18 @@ export class MapMatrix {
 
    fromString(matrixStr: string, separator = " ") {
       this.matrix = matrixStr.split("\n").map((v) => v.split(separator));
+      this.clean();
+   }
+
+   private clean() {
+      for (let i = this.matrix.length - 1; i >= 0; i--) {
+         this.matrix[i] = this.matrix[i].filter(
+            (v) => typeof v == "string" && v.length
+         );
+         if (!this.matrix[i].length) {
+            this.matrix.splice(i, 1);
+         }
+      }
    }
 }
 
