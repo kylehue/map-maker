@@ -96,4 +96,16 @@ export class MaterialTexture {
    public getOrigImageCanvasURL() {
       return this.origImageCanvasURL;
    }
+
+   public getIsHorizontallyFlipped() {
+      return this.isHorizontallyFlipped;
+   }
+
+   public getIsVerticallyFlipped() {
+      return this.isVerticallyFlipped;
+   }
+
+   public getRotation() {
+      return this.rotation;
+   }
 }

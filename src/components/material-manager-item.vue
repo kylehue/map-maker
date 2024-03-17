@@ -166,9 +166,13 @@ const positionOriginOptions: SelectMixedOption[] = [
    },
 ];
 
-const isHorizontallyFlipped = ref(false);
-const isVerticallyFlipped = ref(false);
-const rotation = ref<MaterialRotation>(0);
+const isHorizontallyFlipped = ref(
+   props.material.texture.getIsHorizontallyFlipped()
+);
+const isVerticallyFlipped = ref(
+   props.material.texture.getIsVerticallyFlipped()
+);
+const rotation = ref<MaterialRotation>(props.material.texture.getRotation());
 
 watch(isHorizontallyFlipped, (v) => {
    props.material.texture.setHorizontallyFlipped(v);
