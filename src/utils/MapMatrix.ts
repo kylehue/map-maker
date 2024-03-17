@@ -5,6 +5,10 @@ export class MapMatrix {
 
    constructor() {}
 
+   clear() {
+      this.matrix = [];
+   }
+
    setEmptyMatrixId(emptyMatrixId: string) {
       for (let i = this.matrix.length - 1; i >= 0; i--) {
          this.matrix[i] = this.matrix[i].map((v) => {
@@ -31,6 +35,33 @@ export class MapMatrix {
 
    getMatrix() {
       return this.matrix;
+   }
+
+   trim() {
+      const firstRowIsEmpty = () =>
+         this.matrix[0]?.every((v) => v === this.emptyMatrixId);
+      const lastRowIsEmpty = () =>
+         this.matrix[this.matrix.length - 1]?.every(
+            (v) => v === this.emptyMatrixId
+         );
+      const firstColIsEmpty = () =>
+         this.matrix.every((v) => v[0] === this.emptyMatrixId);
+      const lastColIsEmpty = () =>
+         this.matrix.every((v) => v[v.length - 1] === this.emptyMatrixId);
+
+      while (
+         firstRowIsEmpty() &&
+         lastRowIsEmpty() &&
+         firstColIsEmpty() &&
+         lastColIsEmpty()
+      ) {
+         this.matrix.shift();
+         this.matrix.pop();
+         this.matrix.forEach((v) => {
+            v.shift();
+            v.pop();
+         });
+      }
    }
 
    private getBounds() {
@@ -133,6 +164,8 @@ export class MapMatrix {
       const o2 = col <= 0 ? 0 : 1;
       this.matrix[centerRow + row - o1] ??= [];
       this.matrix[centerRow + row - o1][centerCol + col - o2] = matrixId;
+
+      this.trim();
    }
 
    private translate(rowStep: number, colStep: number) {
