@@ -73,6 +73,8 @@ export const useProjectStore = defineStore("project", () => {
          isVisible: true,
          matrix: new MapMatrix(),
       };
+      layer.matrix.setEmptyMatrixId(_emptyMatrixId.value);
+      layer.matrix.setSeparator(_matrixSeparator.value);
       _layers.unshift(layer);
       return layer;
    }

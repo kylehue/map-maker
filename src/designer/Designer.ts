@@ -33,7 +33,6 @@ export class Designer {
 
       const tick = () => {
          this.repaint();
-         if (this.isMouseDown) this.initTooling();
          setTimeout(() => {
             requestAnimationFrame(tick);
          }, 1000 / this.fps);
@@ -69,22 +68,24 @@ export class Designer {
 
    public initTooling() {
       let [col, row] = this.getMouseColumnRow();
+      const tool = this.designerStore.activeTool;
 
-      if (this.designerStore.activeTool == "brush") {
+      if (tool == "brush") {
+         this.drawBrushTarget();
+      } else if (tool == "eraser") {
+         this.drawEraserTarget();
+      }
+
+      if (!this.isMouseDown) return;
+      if (tool == "brush") {
          const activeMaterial = this.projectStore.selectedMaterial;
          const activeLayer = this.projectStore.selectedLayer;
-         // console.log(activeLayer, activeMaterial);
          if (!activeMaterial || !activeLayer) return;
          activeLayer.matrix.add(row, col, activeMaterial.matrixId);
-         // this.registerMatrixId(
-         //    activeLayer,
-         //    row,
-         //    col,
-         //    activeMaterial.matrixId
-         // );
-         // activeLayer.matrix[row] ??= [];
-         // activeLayer.matrix[row][col] = activeMaterial.matrixId;
-         // console.log(activeLayer.matrix);
+      } else if (tool == "eraser") {
+         const activeLayer = this.projectStore.selectedLayer;
+         if (!activeLayer) return;
+         activeLayer.matrix.add(row, col, this.projectStore.emptyMatrixId);
       }
    }
 
@@ -201,7 +202,7 @@ export class Designer {
       return { image, width, height, x, y };
    }
 
-   private drawTarget() {
+   private drawBrushTarget() {
       const ctx = this.context;
       if (!this.projectStore.selectedMaterial) return;
       const [col, row] = this.getMouseColumnRow();
@@ -213,6 +214,18 @@ export class Designer {
       ctx.globalAlpha = 0.3;
       ctx.drawImage(image, col * tileSize + x, row * tileSize + y);
       ctx.restore();
+   }
+
+   private drawEraserTarget() {
+      const ctx = this.context;
+      const tileSize = this.projectStore.tileSize || 1;
+      const [col, row] = this.getMouseColumnRow();
+      ctx.beginPath();
+      ctx.rect(col * tileSize, row * tileSize, tileSize, tileSize);
+      ctx.strokeStyle = this.theme.value.textColor3;
+      ctx.stroke();
+      ctx.closePath();
+      ctx.beginPath();
    }
 
    private drawGrid() {
@@ -280,7 +293,7 @@ export class Designer {
       }
 
       this.drawGrid();
-      this.drawTarget();
+      this.initTooling();
 
       this.camera.end();
    }

@@ -1,11 +1,22 @@
 export class MapMatrix {
    private matrix: string[][] = [];
    private emptyMatrixId = ".";
+   private separator = " ";
 
    constructor() {}
 
    setEmptyMatrixId(emptyMatrixId: string) {
+      for (let i = this.matrix.length - 1; i >= 0; i--) {
+         this.matrix[i] = this.matrix[i].map((v) => {
+            if (v === this.emptyMatrixId) return emptyMatrixId;
+            return v;
+         });
+      }
       this.emptyMatrixId = emptyMatrixId;
+   }
+
+   setSeparator(separator: string) {
+      this.separator = separator;
    }
 
    getTotalWidth(tileWidth: number) {
@@ -91,11 +102,11 @@ export class MapMatrix {
    }
 
    toString() {
-      return this.matrix.map((v) => v.join(" ")).join("\n");
+      return this.matrix.map((v) => v.join(this.separator)).join("\n");
    }
 
-   fromString(matrixStr: string, separator = " ") {
-      this.matrix = matrixStr.split("\n").map((v) => v.split(separator));
+   fromString(matrixStr: string) {
+      this.matrix = matrixStr.split("\n").map((v) => v.split(this.separator));
       this.clean();
    }
 
