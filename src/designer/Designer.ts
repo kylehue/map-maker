@@ -7,8 +7,16 @@ import { clamp } from "../utils/clamp";
 import { Layer, Material } from "../types";
 import { useSettingsStore } from "../store/settings";
 import { useThemeVars } from "naive-ui";
+import { MapMatrix } from "../utils/MapMatrix";
 
 const { x: mouseX, y: mouseY } = useMouse();
+
+interface Selection {
+   top: number;
+   bottom: number;
+   left: number;
+   right: number;
+}
 
 export class Designer {
    public readonly canvas = document.createElement("canvas");
@@ -21,6 +29,8 @@ export class Designer {
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
    private fps = 60;
    private isMouseDown = false;
+   private selections: Selection[] = [];
+   private selectionMatrix = new MapMatrix();
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
@@ -70,12 +80,6 @@ export class Designer {
       let [col, row] = this.getMouseColumnRow();
       const tool = this.designerStore.activeTool;
 
-      if (tool == "brush") {
-         this.drawMaterialTarget();
-      } else if (tool == "eraser" || tool == "paint-bucket") {
-         this.drawTarget();
-      }
-
       if (!this.isMouseDown) return;
       const layer = this.projectStore.selectedLayer;
       const material = this.projectStore.selectedMaterial;
@@ -88,6 +92,7 @@ export class Designer {
       } else if (tool == "paint-bucket") {
          if (!material || !layer) return;
          layer.matrix.fill(row, col, material.matrixId);
+      } else if (tool == "select") {
       }
    }
 
@@ -207,6 +212,12 @@ export class Designer {
    private drawMaterialTarget() {
       const ctx = this.context;
       if (!this.projectStore.selectedMaterial) return;
+      if (
+         this.designerStore.activeTool != "brush" &&
+         this.designerStore.activeTool != "paint-bucket"
+      ) {
+         return;
+      }
       const [col, row] = this.getMouseColumnRow();
       const tileSize = this.projectStore.tileSize || 1;
       const { image, x, y } = this.getTransformedImageInfo(
@@ -224,10 +235,28 @@ export class Designer {
       const [col, row] = this.getMouseColumnRow();
       ctx.beginPath();
       ctx.rect(col * tileSize, row * tileSize, tileSize, tileSize);
-      ctx.strokeStyle = this.theme.value.textColor3;
+      ctx.strokeStyle = this.theme.value?.textColor3 || "black";
       ctx.stroke();
       ctx.closePath();
+   }
+
+   drawMapBounds() {
+      const widestLayer = this.projectStore.layers.sort((a, b) => {
+         return b.matrix.getTotalWidth(1) - a.matrix.getTotalWidth(1);
+      })[0];
+      const tallestLayer = this.projectStore.layers.sort((a, b) => {
+         return b.matrix.getTotalHeight(1) - a.matrix.getTotalHeight(1);
+      })[0];
+      if (!widestLayer || !tallestLayer) return;
+      const ctx = this.context;
+      const tileSize = this.projectStore.tileSize || 1;
+      const totalWidth = widestLayer.matrix.getTotalWidth(tileSize);
+      const totalHeight = tallestLayer.matrix.getTotalHeight(tileSize);
       ctx.beginPath();
+      ctx.rect(-totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
+      ctx.strokeStyle = this.settings.centerGridColor;
+      ctx.stroke();
+      ctx.closePath();
    }
 
    private drawGrid() {
@@ -295,6 +324,9 @@ export class Designer {
       }
 
       this.drawGrid();
+      this.drawTarget();
+      this.drawMaterialTarget();
+      this.drawMapBounds();
       this.initTooling();
 
       this.camera.end();
