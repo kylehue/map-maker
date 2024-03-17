@@ -25,17 +25,15 @@ export class Designer {
    private readonly designerStore = useDesignerStore();
    private readonly projectStore = useProjectStore();
    private readonly settingsStore = useSettingsStore();
-   private readonly theme = useThemeVars();
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
    private fps = 60;
    private isMouseDown = false;
-   private selections: Selection[] = [];
-   private selectionMatrix = new MapMatrix();
 
    private readonly settings = {
       gridColor: "rgba(125, 125, 125, 0.075)",
       centerGridColor: "rgba(125, 125, 125, 0.3)",
       tileHoverColor: "rgba(129, 230, 155, 0.2)",
+      mapBoundsColor: "rgb(200, 10, 40)"
    };
 
    constructor() {
@@ -84,13 +82,13 @@ export class Designer {
       const layer = this.projectStore.selectedLayer;
       const material = this.projectStore.selectedMaterial;
       if (tool == "brush") {
-         if (!material || !layer) return;
+         if (!material || !layer || layer?.isLocked) return;
          layer.matrix.add(row, col, material.matrixId);
       } else if (tool == "eraser") {
-         if (!layer) return;
+         if (!layer || layer?.isLocked) return;
          layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
       } else if (tool == "paint-bucket") {
-         if (!material || !layer) return;
+         if (!material || !layer || layer?.isLocked) return;
          layer.matrix.fill(row, col, material.matrixId);
       } else if (tool == "select") {
       }
@@ -224,7 +222,7 @@ export class Designer {
          this.projectStore.selectedMaterial
       );
       ctx.save();
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.5;
       ctx.drawImage(image, col * tileSize + x, row * tileSize + y);
       ctx.restore();
    }
@@ -235,26 +233,25 @@ export class Designer {
       const [col, row] = this.getMouseColumnRow();
       ctx.beginPath();
       ctx.rect(col * tileSize, row * tileSize, tileSize, tileSize);
-      ctx.strokeStyle = this.theme.value?.textColor3 || "black";
+      ctx.strokeStyle = this.settings.centerGridColor;
       ctx.stroke();
       ctx.closePath();
    }
 
-   drawMapBounds() {
-      const widestLayer = this.projectStore.layers.sort((a, b) => {
-         return b.matrix.getTotalWidth(1) - a.matrix.getTotalWidth(1);
-      })[0];
-      const tallestLayer = this.projectStore.layers.sort((a, b) => {
-         return b.matrix.getTotalHeight(1) - a.matrix.getTotalHeight(1);
-      })[0];
-      if (!widestLayer || !tallestLayer) return;
+   private drawMapBounds() {
+      const biggestLayer = this.projectStore.layers
+         .filter((v) => v.isVisible)
+         .sort((a, b) => {
+            return b.matrix.getTotalWidth(1) - a.matrix.getTotalWidth(1);
+         })[0];
+      if (!biggestLayer) return;
       const ctx = this.context;
       const tileSize = this.projectStore.tileSize || 1;
-      const totalWidth = widestLayer.matrix.getTotalWidth(tileSize);
-      const totalHeight = tallestLayer.matrix.getTotalHeight(tileSize);
+      const totalWidth = biggestLayer.matrix.getTotalWidth(tileSize);
+      const totalHeight = biggestLayer.matrix.getTotalHeight(tileSize);
       ctx.beginPath();
       ctx.rect(-totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
-      ctx.strokeStyle = this.settings.centerGridColor;
+      ctx.strokeStyle = this.settings.mapBoundsColor;
       ctx.stroke();
       ctx.closePath();
    }
@@ -304,7 +301,7 @@ export class Designer {
       const ctx = this.context;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = this.theme.value?.textColorDisabled || "black";
+      ctx.fillStyle = this.settings.gridColor;
       ctx.fillText(text, x, y);
    }
 
@@ -320,6 +317,7 @@ export class Designer {
 
       for (let i = this.projectStore.layers.length - 1; i >= 0; i--) {
          const layer = this.projectStore.layers[i];
+         if (!layer.isVisible) continue;
          this.drawTiles(layer);
       }
 
