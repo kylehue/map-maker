@@ -19,7 +19,7 @@ export class Designer {
    private readonly settingsStore = useSettingsStore();
    private readonly theme = useThemeVars();
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
-   private fps = 50;
+   private fps = 60;
    private isMouseDown = false;
 
    private readonly settings = {
@@ -53,7 +53,7 @@ export class Designer {
       });
 
       this.canvas.addEventListener("mouseenter", (e) => {
-         this.fps = 50;
+         this.fps = 60;
          this.repaint();
       });
 
@@ -71,21 +71,23 @@ export class Designer {
       const tool = this.designerStore.activeTool;
 
       if (tool == "brush") {
-         this.drawBrushTarget();
-      } else if (tool == "eraser") {
-         this.drawEraserTarget();
+         this.drawMaterialTarget();
+      } else if (tool == "eraser" || tool == "paint-bucket") {
+         this.drawTarget();
       }
 
       if (!this.isMouseDown) return;
+      const layer = this.projectStore.selectedLayer;
+      const material = this.projectStore.selectedMaterial;
       if (tool == "brush") {
-         const activeMaterial = this.projectStore.selectedMaterial;
-         const activeLayer = this.projectStore.selectedLayer;
-         if (!activeMaterial || !activeLayer) return;
-         activeLayer.matrix.add(row, col, activeMaterial.matrixId);
+         if (!material || !layer) return;
+         layer.matrix.add(row, col, material.matrixId);
       } else if (tool == "eraser") {
-         const activeLayer = this.projectStore.selectedLayer;
-         if (!activeLayer) return;
-         activeLayer.matrix.add(row, col, this.projectStore.emptyMatrixId);
+         if (!layer) return;
+         layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
+      } else if (tool == "paint-bucket") {
+         if (!material || !layer) return;
+         layer.matrix.fill(row, col, material.matrixId);
       }
    }
 
@@ -202,7 +204,7 @@ export class Designer {
       return { image, width, height, x, y };
    }
 
-   private drawBrushTarget() {
+   private drawMaterialTarget() {
       const ctx = this.context;
       if (!this.projectStore.selectedMaterial) return;
       const [col, row] = this.getMouseColumnRow();
@@ -216,7 +218,7 @@ export class Designer {
       ctx.restore();
    }
 
-   private drawEraserTarget() {
+   private drawTarget() {
       const ctx = this.context;
       const tileSize = this.projectStore.tileSize || 1;
       const [col, row] = this.getMouseColumnRow();

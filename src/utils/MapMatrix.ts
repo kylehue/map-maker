@@ -33,13 +33,79 @@ export class MapMatrix {
       return this.matrix;
    }
 
-   add(row: number, col: number, matrixId: string) {
-      row = row >= 0 ? row + 1 : row;
-      col = col >= 0 ? col + 1 : col;
+   private getBounds() {
       const top = -Math.ceil(this.matrix.length / 2);
       const bottom = Math.ceil(this.matrix.length / 2);
       const left = -Math.ceil((this.matrix[0]?.length || 0) / 2);
       const right = Math.ceil((this.matrix[0]?.length || 0) / 2);
+
+      return {
+         top,
+         bottom,
+         left,
+         right,
+      };
+   }
+
+   fill(row: number, col: number, matrixId: string) {
+      // Expand matrix if the row/col exceeds the matrix bounds
+      const oldBounds = this.getBounds();
+      if (
+         col <= oldBounds.left ||
+         col >= oldBounds.right ||
+         row <= oldBounds.top ||
+         row >= oldBounds.bottom
+      ) {
+         this.add(row, col, this.emptyMatrixId);
+      }
+
+      row = row >= 0 ? row + 1 : row;
+      col = col >= 0 ? col + 1 : col;
+      const fill = (
+         row: number,
+         col: number,
+         matrixId: string,
+         current: string
+      ) => {
+         // stop if out of bounds
+         if (
+            row < 0 ||
+            row >= this.matrix.length ||
+            col < 0 ||
+            col >= this.matrix[0].length
+         ) {
+            return;
+         }
+
+         // stop if the id is already set
+         if (this.matrix[row][col] === matrixId) return;
+
+         // stop if the id is not the same
+         if (current != this.matrix[row][col]) return;
+
+         this.matrix[row][col] = matrixId;
+         fill(row + 1, col, matrixId, current);
+         fill(row - 1, col, matrixId, current);
+         fill(row, col + 1, matrixId, current);
+         fill(row, col - 1, matrixId, current);
+      };
+
+      const centerRow = Math.ceil(this.matrix.length / 2);
+      const centerCol = Math.ceil((this.matrix[0]?.length || 0) / 2);
+      const o1 = row <= 0 ? 0 : 1; // offset
+      const o2 = col <= 0 ? 0 : 1;
+      fill(
+         centerRow + row - o1,
+         centerCol + col - o2,
+         matrixId,
+         this.matrix[centerRow + row - o1][centerCol + col - o2]
+      );
+   }
+
+   add(row: number, col: number, matrixId: string) {
+      row = row >= 0 ? row + 1 : row;
+      col = col >= 0 ? col + 1 : col;
+      const { top, bottom, left, right } = this.getBounds();
 
       // Keep matrix perfectly square
       let overlapX = 0;

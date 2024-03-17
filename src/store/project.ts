@@ -186,7 +186,11 @@ export const useProjectStore = defineStore("project", () => {
       _matrixSeparator.value = " ";
       materialsMap.clear();
       _materialsSearcher.removeAll();
+
+      _selectedLayer.value = createLayer("Layer 1");
    }
+
+   reset();
 
    const filename = computed(() => _filename.value);
    const emptyMatrixId = computed(() => _emptyMatrixId.value);
