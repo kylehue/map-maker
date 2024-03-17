@@ -1,15 +1,66 @@
 <template>
-   <div class="flex w-full h-full" ref="canvasContainer"></div>
+   <div class="flex w-full h-full cursor-none" ref="canvasContainer">
+      <div
+         class="absolute flex items-center justify-center pointer-events-none"
+         :style="{
+            transform: `translate(${x - left}px,${y - top}px)`,
+         }"
+      >
+         <NIcon size="large">
+            <component :is="toolIcon" />
+         </NIcon>
+      </div>
+   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
-import { useElementSize } from "@vueuse/core";
+import { NIcon } from "naive-ui";
+import { computed, h, onMounted, reactive, ref, watch } from "vue";
+import { useElementBounding, useElementSize, useMouse } from "@vueuse/core";
 import { useDesignerStore } from "../../store/designer";
+import {
+   PhPaintBrush,
+   PhCursor,
+   PhSelection,
+   PhEraser,
+   PhPaintBucket,
+} from "@phosphor-icons/vue";
 
 const canvasContainer = ref<HTMLDivElement>();
 const canvasContainerSize = useElementSize(canvasContainer);
+const { top, left } = useElementBounding(canvasContainer);
 const designerStore = useDesignerStore();
+const { x, y } = useMouse({
+   target: canvasContainer,
+});
+
+const toolIcon = computed(() => {
+   const tool = designerStore.activeTool;
+   switch (tool) {
+      case "brush":
+         return h(PhPaintBrush, {
+            style: {
+               transform: `translateY(-90%)`,
+            },
+         });
+      case "eraser":
+         return h(PhEraser, {
+            style: {
+               transform: `translate(-10%, -80%)`,
+            },
+         });
+      case "paint-bucket":
+         return h(PhPaintBucket, {
+            style: {
+               transform: `translate(-100%, -80%)`,
+            },
+         });
+      case "select":
+         return h(PhSelection);
+      default:
+         return h(PhCursor);
+   }
+});
 
 watch(
    () => [canvasContainerSize.width.value, canvasContainerSize.height.value],
