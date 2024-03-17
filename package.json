@@ -14,6 +14,7 @@
    "devDependencies": {
       "@phosphor-icons/vue": "^2.1.6",
       "@types/splitpanes": "^2.2.6",
+      "@types/wicg-file-system-access": "^2023.10.5",
       "@vitejs/plugin-vue": "^5.0.4",
       "@vueuse/core": "^10.9.0",
       "autoprefixer": "^10.4.18",
