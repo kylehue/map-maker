@@ -1,9 +1,6 @@
 <template>
    <div class="flex w-full h-full">
-      <div
-         v-if="!designerStore.isFullScreen"
-         class="toolbar flex w-fit justify-center"
-      >
+      <div class="toolbar flex w-fit justify-center">
          <Toolbar></Toolbar>
       </div>
       <div class="relative flex flex-col w-full h-full">
@@ -24,10 +21,8 @@ import { useThemeVars } from "naive-ui";
 import Canvas from "./canvas.vue";
 import Navbar from "./navbar.vue";
 import Toolbar from "./toolbar.vue";
-import { useDesignerStore } from "../../store/designer";
 
 const theme = useThemeVars();
-const designerStore = useDesignerStore();
 </script>
 
 <style lang="scss" scoped>

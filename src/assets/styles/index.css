@@ -78,3 +78,11 @@ body {
    .n-menu-item-content-header {
    color: var(--n-item-text-color);
 }
+
+.n-base-icon.n-dialog__icon {
+   color: var(--n-title-text-color);
+}
+
+.n-dialog__icon {
+   margin-right: 10px !important;
+}

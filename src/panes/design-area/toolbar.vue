@@ -1,5 +1,8 @@
 <template>
-   <div class="flex flex-col w-full h-full p-2 pt-8 gap-1">
+   <div
+      v-if="!designerStore.isFullScreen && settingsStore.window.showToolbar"
+      class="flex flex-col w-full h-full p-2 pt-8 gap-1"
+   >
       <template v-for="tool in tools" :key="tool.tool">
          <ToolbarItem v-bind="tool"></ToolbarItem>
       </template>
@@ -17,6 +20,8 @@ import {
 import { Tool } from "../../types";
 import { VNode, h } from "vue";
 import ToolbarItem from "./toolbar-item.vue";
+import { useDesignerStore } from "../../store/designer";
+import { useSettingsStore } from "../../store/settings";
 
 const tools: {
    tool: Tool;
@@ -49,4 +54,7 @@ const tools: {
       icon: h(PhPaintBucket),
    },
 ];
+
+const designerStore = useDesignerStore();
+const settingsStore = useSettingsStore();
 </script>

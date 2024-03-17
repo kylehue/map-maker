@@ -1,12 +1,19 @@
 <template>
-   <n-config-provider :theme="themeToUse" :theme-overrides="themeOverrides">
-      <App></App>
-   </n-config-provider>
+   <NConfigProvider :theme="themeToUse" :theme-overrides="themeOverrides">
+      <NDialogProvider>
+         <App></App>
+      </NDialogProvider>
+   </NConfigProvider>
 </template>
 
 <script setup lang="ts">
 import { BuiltInGlobalTheme } from "naive-ui/es/themes/interface";
-import { NConfigProvider, darkTheme, lightTheme } from "naive-ui";
+import {
+   NConfigProvider,
+   NDialogProvider,
+   darkTheme,
+   lightTheme,
+} from "naive-ui";
 import App from "./app.vue";
 import themeOverrides from "./utils/get-naive-theme";
 import { currentTheme } from "./composables/use-theme-switch";

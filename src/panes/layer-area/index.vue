@@ -125,4 +125,3 @@ onUpdated(() => {
    background: v-bind("theme.cardColor");
 }
 </style>
-../../components/layer-item.vue

@@ -18,13 +18,21 @@
                   <DesignArea></DesignArea>
                </Pane>
                <Pane
-                  v-if="!designerStore.isFullScreen"
+                  v-if="
+                     !designerStore.isFullScreen &&
+                     (settingsStore.window.showMaterials ||
+                        settingsStore.window.showMatrix ||
+                        settingsStore.window.showLayers)
+                  "
                   class="min-w-5 overflow-hidden"
                   :size="30"
                >
                   <Splitpanes class="flex flex-col h-full" horizontal>
                      <Pane
-                        v-if="settingsStore.window.showMatrix"
+                        v-if="
+                           settingsStore.window.showMaterials ||
+                           settingsStore.window.showMatrix
+                        "
                         class="relative flex-grow min-h-5 overflow-hidden"
                         :size="70"
                      >
@@ -35,17 +43,25 @@
                               animated
                               class="*:!text-xs border-t-0"
                            >
-                              <NTabPane name="1" tab="Materials">
+                              <NTabPane
+                                 v-if="settingsStore.window.showMaterials"
+                                 name="1"
+                                 tab="Materials"
+                              >
                                  <MaterialArea></MaterialArea>
                               </NTabPane>
-                              <NTabPane name="2" tab="Matrix">
+                              <NTabPane
+                                 v-if="settingsStore.window.showMatrix"
+                                 name="2"
+                                 tab="Matrix"
+                              >
                                  <MatrixArea></MatrixArea>
                               </NTabPane>
                            </NTabs>
                         </div>
                      </Pane>
                      <Pane
-                        v-if="settingsStore.window.showMaterials"
+                        v-if="settingsStore.window.showLayers"
                         class="relative flex-grow min-h-5 overflow-hidden"
                         :size="30"
                      >

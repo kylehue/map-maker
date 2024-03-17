@@ -5,6 +5,8 @@ export const useSettingsStore = defineStore("settings", () => {
    const _window = reactive({
       showMatrix: true,
       showMaterials: true,
+      showLayers: true,
+      showToolbar: true,
    });
 
    const _keybinds = reactive({
