@@ -87,7 +87,7 @@ export class MapMatrix {
          row <= oldBounds.top ||
          row >= oldBounds.bottom
       ) {
-         this.add(row, col, this.emptyMatrixId);
+         this._add(row, col, this.emptyMatrixId);
       }
 
       row = row >= 0 ? row + 1 : row;
@@ -133,7 +133,7 @@ export class MapMatrix {
       );
    }
 
-   add(row: number, col: number, matrixId: string) {
+   private _add(row: number, col: number, matrixId: string) {
       row = row >= 0 ? row + 1 : row;
       col = col >= 0 ? col + 1 : col;
       const { top, bottom, left, right } = this.getBounds();
@@ -165,6 +165,10 @@ export class MapMatrix {
       this.matrix[centerRow + row - o1] ??= [];
       this.matrix[centerRow + row - o1][centerCol + col - o2] = matrixId;
 
+   }
+
+   add(row: number, col: number, matrixId: string) {
+      this._add(row, col, matrixId);
       this.trim();
    }
 
