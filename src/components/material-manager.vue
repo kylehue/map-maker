@@ -13,7 +13,7 @@
             @close="() => (isMaterialManagerVisible = false)"
          >
             <div class="relative flex flex-col w-full h-full overflow-hidden">
-               <div class="flex flex-row gap-2 w-fit z-10">
+               <div class="flex flex-row gap-2 w-full z-10">
                   <NInput
                      placeholder="Search"
                      class="max-w-[300px]"
@@ -33,6 +33,22 @@
                   >
                      Browse Materials
                   </NButton>
+                  <NUpload
+                     multiple
+                     directory-dnd
+                     accept="image/*"
+                     :on-change="handleFileUpload"
+                     :show-file-list="false"
+                  >
+                     <NButton secondary quaternary>
+                        <template #icon>
+                           <NIcon>
+                              <PhUploadSimple />
+                           </NIcon>
+                        </template>
+                        Load...
+                     </NButton>
+                  </NUpload>
                </div>
                <div
                   class="flex flex-col absolute overflow-auto w-full h-full pt-16"
@@ -58,12 +74,20 @@
 </template>
 
 <script setup lang="ts">
-import { NCard, NInput, NCollapse, NIcon, NButton } from "naive-ui";
+import {
+   NCard,
+   NInput,
+   NCollapse,
+   NIcon,
+   NButton,
+   NUpload,
+   UploadProps,
+} from "naive-ui";
 import {
    focusedMaterial,
    isMaterialManagerVisible,
 } from "../composables/use-material-manager";
-import { PhMagnifyingGlass } from "@phosphor-icons/vue";
+import { PhMagnifyingGlass, PhUploadSimple } from "@phosphor-icons/vue";
 import MaterialManagerItem from "./material-manager-item.vue";
 import { useProjectStore } from "../store/project";
 import { computed, ref, watch } from "vue";
@@ -83,6 +107,12 @@ const materialsComputed = computed(() => {
    }
    return projectStore.searchMaterial(searchMaterialText.value);
 });
+
+type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
+function handleFileUpload(data: FileUploadData) {
+   if (!data.file.file) return;
+   projectStore.createMaterial(data.file.file.name, data.file.file);
+}
 </script>
 
 <style scoped lang="scss">
