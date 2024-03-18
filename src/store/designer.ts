@@ -20,16 +20,32 @@ export const useDesignerStore = defineStore("designer", () => {
       _designer.value = new Designer();
    });
 
+   function getMinZoom() {
+      return projectStore.tileSize * _minTiles.value;
+   }
+
+   function getMaxZoom() {
+      return projectStore.tileSize * _maxTiles.value;
+   }
+
    function setZoom(z: number) {
-      _zoom.value = clamp(
-         z,
-         projectStore.tileSize * _minTiles.value,
-         projectStore.tileSize * _maxTiles.value
-      );
+      _zoom.value = clamp(z, getMinZoom(), getMaxZoom());
    }
 
    function addZoom(z: number) {
       setZoom(_zoom.value + z);
+   }
+
+   function getZoomNormalizer() {
+      const sx = designer.value?.camera.viewport.scale.x || 1;
+      const sy = designer.value?.camera.viewport.scale.y || 1;
+      return Math.max(1 / sx, 1 / sy);
+   }
+
+   function move(x: number, y: number) {
+      const zoomNormalizer = getZoomNormalizer();
+      _position.x += x * zoomNormalizer;
+      _position.y += y * zoomNormalizer;
    }
 
    function setMaxTiles(n: number) {
@@ -82,5 +98,9 @@ export const useDesignerStore = defineStore("designer", () => {
       centerView,
       isFullScreen,
       setFullScreen,
+      getMinZoom,
+      getMaxZoom,
+      getZoomNormalizer,
+      move,
    };
 });

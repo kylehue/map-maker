@@ -8,6 +8,7 @@ import { Layer, Material } from "../types";
 import { useSettingsStore } from "../store/settings";
 import { useThemeVars } from "naive-ui";
 import { MapMatrix } from "../utils/MapMatrix";
+import { map } from "../utils/map";
 
 const { x: mouseX, y: mouseY } = useMouse();
 
@@ -21,7 +22,7 @@ interface Selection {
 export class Designer {
    public readonly canvas = document.createElement("canvas");
    public readonly context = this.canvas.getContext("2d")!;
-   private readonly camera = new Camera(this.context);
+   public readonly camera = new Camera(this.context);
    private readonly designerStore = useDesignerStore();
    private readonly projectStore = useProjectStore();
    private readonly settingsStore = useSettingsStore();
@@ -68,6 +69,11 @@ export class Designer {
       this.canvas.addEventListener("mouseleave", (e) => {
          this.isMouseDown = false;
          this.fps = 4;
+         this.repaint();
+      });
+
+      this.canvas.addEventListener("wheel", (e) => {
+         this.designerStore.addZoom(e.deltaY);
          this.repaint();
       });
 
@@ -270,6 +276,7 @@ export class Designer {
 
    private drawGrid() {
       const ctx = this.context;
+      ctx.lineWidth = this.designerStore.getZoomNormalizer() * 0.5;
 
       // draw center x & y lines
       ctx.beginPath();
@@ -287,7 +294,6 @@ export class Designer {
       const rowEnd = ~~(this.camera.viewport.bottom / tileSize) + 4;
       const colStart = ~~(this.camera.viewport.left / tileSize) - 4;
       const colEnd = ~~(this.camera.viewport.right / tileSize) + 4;
-      ctx.lineWidth = 0.5;
       ctx.strokeStyle = this.settings.gridColor;
       for (let rowIndex = rowStart; rowIndex < rowEnd; rowIndex++) {
          ctx.beginPath();

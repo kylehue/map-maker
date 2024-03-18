@@ -176,9 +176,7 @@ const settingsStore = useSettingsStore();
 const designerStore = useDesignerStore();
 const zoomViewportButton = ref();
 function moveDesigner(x: number, y: number) {
-   const position = designerStore.position;
-   position.x += -x * 2;
-   position.y += -y * 2;
+   designerStore.move(-x, -y);
    designerStore.designer?.setFPS(60);
 }
 
