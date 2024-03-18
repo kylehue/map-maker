@@ -304,9 +304,10 @@ export namespace ProjectSaver {
       cachedWritable.value = undefined;
    }
 
-   addEventListener("beforeunload", async (e) => {
-      if (!cachedWritable.value) return;
-      await Writer.closeWriter(cachedWritable.value, true);
+   addEventListener("beforeunload", (e) => {
+      const projectStore = useProjectStore();
+      if (projectStore.isEmpty) return;
+      save();
       e.returnValue = "Changes you made may not be saved.";
       return "Changes you made may not be saved.";
    });
