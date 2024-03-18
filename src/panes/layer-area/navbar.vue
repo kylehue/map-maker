@@ -22,9 +22,7 @@
                   quaternary
                   circle
                   :disabled="!projectStore.selectedLayer"
-                  @click="
-                     () => projectStore.moveLayer(projectStore.selectedLayer!, -1)
-                  "
+                  @click="handleMoveLayerUp"
                >
                   <template #icon>
                      <PhCaretUp />
@@ -40,9 +38,7 @@
                   quaternary
                   circle
                   :disabled="!projectStore.selectedLayer"
-                  @click="
-                     () => projectStore.moveLayer(projectStore.selectedLayer!, 1)
-                  "
+                  @click="handleMoveLayerDown"
                >
                   <template #icon>
                      <PhCaretDown />
@@ -110,15 +106,32 @@
 </template>
 
 <script setup lang="ts">
-import { NButton, NTooltip, NIcon } from "naive-ui";
+import { NButton, NTooltip, NIcon, useMessage } from "naive-ui";
 import {
    PhStackSimple,
    PhLockSimple,
    PhTrashSimple,
    PhCopy,
    PhCaretUp,
-   PhCaretDown
+   PhCaretDown,
 } from "@phosphor-icons/vue";
 import { useProjectStore } from "../../store/project";
 const projectStore = useProjectStore();
+const message = useMessage();
+
+function handleMoveLayerUp() {
+   if (projectStore.selectedLayer?.isLocked) {
+      message.warning("This layer is locked!");
+      return;
+   }
+   projectStore.moveLayer(projectStore.selectedLayer!, -1);
+}
+
+function handleMoveLayerDown() {
+   if (projectStore.selectedLayer?.isLocked) {
+      message.warning("This layer is locked!");
+      return;
+   }
+   projectStore.moveLayer(projectStore.selectedLayer!, 1);
+}
 </script>

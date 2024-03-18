@@ -81,6 +81,7 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function moveLayer(layer: Layer, step: number) {
+      if (layer.isLocked) return;
       const currentIndex = _layers.indexOf(layer);
       const targetIndex = clamp(currentIndex + step, 0, _layers.length - 1);
       const isSelected = _selectedLayer.value === layer;
