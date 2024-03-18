@@ -1,17 +1,26 @@
 <template>
    <div class="flex items-center justify-between w-full px-8">
-      <NMenu
-         v-model:value="navActiveKey"
-         mode="horizontal"
-         :options="navOptions"
-         responsive
-         dropdown-placement="top-start"
-         :dropdown-props="{
-            arrowPointToCenter: true,
-            showArrow: true,
-         }"
-         @update:value="handleSelect"
-      />
+      <div class="flex items-center w-fit">
+         <NMenu
+            v-model:value="navActiveKey"
+            mode="horizontal"
+            :options="navOptions"
+            responsive
+            dropdown-placement="top-start"
+            :dropdown-props="{
+               arrowPointToCenter: true,
+               showArrow: true,
+            }"
+            @update:value="handleSelect"
+         />
+         <NCheckbox
+            v-if="isSavedToLocal"
+            v-model:checked="settingsStore.isAutosaveEnabled"
+            class="text-nowrap"
+         >
+            Enable Autosave
+         </NCheckbox>
+      </div>
       <ThemeSwitcher></ThemeSwitcher>
    </div>
 </template>
@@ -25,8 +34,9 @@ import {
    NText,
    useDialog,
    useMessage,
+   NCheckbox,
 } from "naive-ui";
-import { h, reactive, ref, watch } from "vue";
+import { computed, h, reactive, ref, watch } from "vue";
 import ThemeSwitcher from "../components/theme-switcher.vue";
 import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
@@ -37,6 +47,7 @@ enum Navigation {
    FILE_DROPDOWN,
    FILE_NEW_PROJECT,
    FILE_OPEN_FILES,
+   FILE_SAVE,
    FILE_SAVE_AS,
    FILE_EXPORT_DROPDOWN,
    EXPORT_MATRIX,
@@ -52,6 +63,7 @@ enum Navigation {
    EDIT_TILE_SIZE,
 }
 
+const isSavedToLocal = computed(() => !!ProjectSaver.cachedWritable.value);
 const message = useMessage();
 const dialog = useDialog();
 const settingsStore = useSettingsStore();
@@ -69,6 +81,10 @@ const navOptions: MenuOption[] = [
          {
             key: Navigation.FILE_OPEN_FILES,
             label: "Open Project...",
+         },
+         {
+            key: Navigation.FILE_SAVE,
+            label: "Save",
          },
          {
             key: Navigation.FILE_SAVE_AS,
@@ -146,6 +162,12 @@ function handleSelect(e: Navigation) {
       case Navigation.FILE_OPEN_FILES:
          openProject();
          break;
+      case Navigation.FILE_SAVE:
+         ProjectSaver.save(true).then(() => {
+            if (!isSavedToLocal.value) return;
+            message.success("Project has been saved.");
+         });
+         break;
       case Navigation.FILE_SAVE_AS:
          saveProject();
          break;
@@ -176,19 +198,39 @@ function handleSelect(e: Navigation) {
    }
 }
 
-const autosaveMessage = "Autosave has been enabled.";
-const noAutosaveMessage = "Autosave is not supported.";
-async function openProject() {
-   try {
-      await ProjectSaver.open();
-      if (!ProjectSaver.isWritableCached()) {
-         message.error(noAutosaveMessage, {
+// Handle autosave
+let lastInterval: number | null = null;
+watch(
+   () => settingsStore.isAutosaveEnabled,
+   (isAutosaveEnabled) => {
+      if (isAutosaveEnabled) {
+         message.success("Autosave has been enabled.", {
             closable: true,
             duration: 10000,
          });
+
+         lastInterval = setInterval(() => {
+            ProjectSaver.save();
+         }, 1000 * 60 * settingsStore.autosaveIntervalInMinutes);
       } else {
-         message.success(autosaveMessage, { closable: true, duration: 10000 });
+         message.warning("Autosave has been disabled.", {
+            closable: true,
+            duration: 10000,
+         });
+         if (typeof lastInterval == "number") {
+            clearInterval(lastInterval);
+            lastInterval = null;
+         }
       }
+   },
+   {
+      immediate: true,
+   }
+);
+
+async function openProject() {
+   try {
+      await ProjectSaver.open();
    } catch (e) {
       message.error("Invalid file.");
    }
@@ -197,14 +239,6 @@ async function openProject() {
 async function saveProject() {
    try {
       await ProjectSaver.saveAs();
-      if (ProjectSaver.isWritableCached()) {
-         message.success(autosaveMessage, { closable: true, duration: 10000 });
-      } else {
-         message.error(noAutosaveMessage, {
-            closable: true,
-            duration: 10000,
-         });
-      }
    } catch (e) {
       message.error("Invalid file.");
    }
@@ -222,7 +256,6 @@ function confirmNewProject() {
                type: "warning",
                onClick(e) {
                   projectStore.setupNewProject();
-                  dialog.destroyAll();
                },
             },
             () => "Yes"

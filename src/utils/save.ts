@@ -1,7 +1,9 @@
+import { ref } from "vue";
 import { useDesignerStore } from "../store/designer";
 import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
 import { MaterialPositionOrigin, MaterialRotation, Tool } from "../types";
+import { Writer } from "./writer";
 
 export namespace ProjectSaver {
    export const fileExtension = ".mpmkr";
@@ -45,6 +47,7 @@ export namespace ProjectSaver {
             showMaterial: boolean;
             showMapBounds: boolean;
          };
+         isAutosaveEnabled: boolean;
       };
       designer: {
          zoom: number;
@@ -113,6 +116,7 @@ export namespace ProjectSaver {
          json.settings.designerArea.showMapBounds;
       settingsStore.materialArea.showMatrixId =
          json.settings.materialArea.showMatrixId;
+      settingsStore.isAutosaveEnabled = json.settings.isAutosaveEnabled;
    }
 
    export function toJSON(): ProjectJSON {
@@ -160,6 +164,7 @@ export namespace ProjectSaver {
             window: Object.assign({}, settingsStore.window),
             designerArea: Object.assign({}, settingsStore.designerArea),
             materialArea: Object.assign({}, settingsStore.materialArea),
+            isAutosaveEnabled: settingsStore.isAutosaveEnabled,
          },
       };
    }
@@ -186,71 +191,8 @@ export namespace ProjectSaver {
       URL.revokeObjectURL(url);
    }
 
-   let currentWritable: FileSystemWritableFileStream | null = null;
-   export async function saveAs(downloadIfNotSupported = true) {
-      await save(); // save first
-      const projectStore = useProjectStore();
-      if ("showSaveFilePicker" in window) {
-         try {
-            if (currentWritable) {
-               await currentWritable.close();
-               currentWritable = null;
-            }
-
-            const handler = await window.showSaveFilePicker({
-               types: [
-                  {
-                     description: "Map Maker Files",
-                     accept: {
-                        "text/plain": [fileExtension],
-                     },
-                  },
-               ],
-               suggestedName: projectStore.filename,
-            });
-
-            const writable = await handler.createWritable();
-            await writable.truncate(0);
-            await writable.write(serialize());
-            currentWritable = writable;
-         } catch (e) {
-            console.warn(e);
-         }
-      } else if (downloadIfNotSupported) {
-         download();
-      }
-   }
-
-   export async function save(forceIfNotSaved = false) {
-      if (!currentWritable) {
-         if (forceIfNotSaved) await saveAs(false);
-         return;
-      }
-
-      try {
-         await currentWritable.truncate(0); // clear
-         await currentWritable.write(serialize());
-      } catch (e) {
-         console.warn(e);
-      }
-   }
-
-   export function isWritableCached() {
-      return !!currentWritable;
-   }
-
-   export async function resetSaver() {
-      if (!currentWritable) return;
-      await currentWritable.close();
-      currentWritable = null;
-   }
-
-   addEventListener("beforeunload", async (e) => {
-      await resetSaver();
-   });
-
+   export const cachedWritable = ref<FileSystemWritableFileStream>();
    export async function open() {
-      await save(); // save first
       if ("showOpenFilePicker" in window) {
          try {
             const [handler] = await window.showOpenFilePicker({
@@ -262,18 +204,23 @@ export namespace ProjectSaver {
                      },
                   },
                ],
+               excludeAcceptAllOption: true,
             });
 
+            // Save last project first before updating the current writer
+            await save();
+
+            // Close the last project's writer
+            if (cachedWritable.value) Writer.closeWriter(cachedWritable.value);
+
+            // Update writable
+            const writable = await handler.createWritable();
+            cachedWritable.value = writable;
+
+            // Load project from json
             const file = await handler.getFile();
             const fileContent = await file.text();
             loadFromJSON(deserialize(fileContent));
-
-            // update writable
-            await resetSaver();
-            const writable = await handler.createWritable();
-            await writable.truncate(0);
-            await writable.write(fileContent);
-            currentWritable = writable;
          } catch (e) {
             console.warn(e);
          }
@@ -298,4 +245,69 @@ export namespace ProjectSaver {
          input.click();
       }
    }
+
+   export async function saveAs(downloadIfNotSupported = true) {
+      if ("showSaveFilePicker" in window) {
+         try {
+            const projectStore = useProjectStore();
+            const handler = await window.showSaveFilePicker({
+               types: [
+                  {
+                     description: "Map Maker Files",
+                     accept: {
+                        "text/plain": [fileExtension],
+                     },
+                  },
+               ],
+               excludeAcceptAllOption: true,
+               suggestedName: projectStore.filename,
+            });
+
+            // Save last project first before updating the current writer
+            await save();
+
+            // Close the last project's writer
+            if (cachedWritable.value) Writer.closeWriter(cachedWritable.value);
+
+            // Update writable
+            const writable = await handler.createWritable();
+            cachedWritable.value = writable;
+            await save();
+         } catch (e) {
+            console.warn(e);
+         }
+      } else if (downloadIfNotSupported) {
+         download();
+      }
+   }
+
+   export async function save(forceIfNotSaved = false) {
+      if (!cachedWritable.value) {
+         if (forceIfNotSaved) await saveAs(false);
+         return;
+      }
+
+      try {
+         Writer.enqueue(cachedWritable.value, serialize());
+      } catch (e) {
+         console.warn(e);
+      }
+   }
+
+   export function isBusySaving() {
+      return cachedWritable.value && Writer.isWriterBusy(cachedWritable.value);
+   }
+
+   export async function reset() {
+      if (!cachedWritable.value) return;
+      await Writer.closeWriter(cachedWritable.value);
+      cachedWritable.value = undefined;
+   }
+
+   addEventListener("beforeunload", async (e) => {
+      if (!cachedWritable.value) return;
+      await Writer.closeWriter(cachedWritable.value, true);
+      e.returnValue = "Changes you made may not be saved.";
+      return "Changes you made may not be saved.";
+   });
 }

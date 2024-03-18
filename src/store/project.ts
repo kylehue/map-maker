@@ -31,29 +31,6 @@ export const useProjectStore = defineStore("project", () => {
       },
    });
 
-   // autosave
-   let stopAutosave: Function | null = null;
-   function autosave() {
-      stopAutosave = watch(
-         [
-            _filename,
-            _emptyMatrixId,
-            _matrixSeparator,
-            _layers,
-            _materials,
-            _tileSize,
-            _selectedLayer,
-            _selectedMaterial,
-         ],
-         () => {
-            ProjectSaver.save();
-         },
-         {
-            deep: true,
-         }
-      );
-   }
-
    let _materialsSearcherNeedsUpdate = true;
    watch(_materials, (_materials) => {
       _materialsSearcherNeedsUpdate = true;
@@ -199,7 +176,6 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function reset() {
-      stopAutosave?.call(null);
       _filename.value = "untitled project";
       _layers.length = 0;
       _materials.length = 0;
@@ -211,16 +187,14 @@ export const useProjectStore = defineStore("project", () => {
       materialsMap.clear();
       _materialsSearcher.removeAll();
       _selectedLayer.value = createLayer("Layer 1");
-      autosave();
    }
 
    async function setupNewProject() {
-      await ProjectSaver.resetSaver();
+      await ProjectSaver.reset();
       reset();
    }
 
    reset();
-   autosave();
 
    const filename = computed(() => _filename.value);
    const emptyMatrixId = computed(() => _emptyMatrixId.value);
@@ -230,6 +204,13 @@ export const useProjectStore = defineStore("project", () => {
    const tileSize = computed(() => _tileSize.value);
    const selectedLayer = computed(() => _selectedLayer.value);
    const selectedMaterial = computed(() => _selectedMaterial.value);
+   const isEmpty = computed(() => {
+      return (
+         _layers.length == 1 &&
+         !_layers[0].matrix.toString().length &&
+         _materials.length == 0
+      );
+   });
 
    return {
       filename,
@@ -257,5 +238,6 @@ export const useProjectStore = defineStore("project", () => {
       setSelectedMaterial,
       reset,
       setupNewProject,
+      isEmpty,
    };
 });

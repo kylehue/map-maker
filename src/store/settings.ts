@@ -24,6 +24,8 @@ export const useSettingsStore = defineStore("settings", () => {
       showMapBounds: true,
    });
 
+   const isAutosaveEnabled = ref(false);
+   const autosaveIntervalInMinutes = ref(2);
    const window = computed(() => _window);
    const keybinds = computed(() => _keybinds);
    const materialArea = computed(() => _materialArea);
@@ -34,5 +36,7 @@ export const useSettingsStore = defineStore("settings", () => {
       keybinds,
       materialArea,
       designerArea,
+      isAutosaveEnabled,
+      autosaveIntervalInMinutes,
    };
 });
