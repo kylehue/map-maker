@@ -35,6 +35,7 @@ import {
    useDialog,
    useMessage,
    NCheckbox,
+   NInput,
 } from "naive-ui";
 import { computed, h, reactive, ref, watch } from "vue";
 import ThemeSwitcher from "../components/theme-switcher.vue";
@@ -60,7 +61,9 @@ enum Navigation {
    EDIT_DROPDOWN,
    EDIT_UNDO,
    EDIT_REDO,
-   EDIT_TILE_SIZE,
+   EDIT_CHANGE_TILE_SIZE,
+   EDIT_CHANGE_EMPTY_MATRIX_ID,
+   EDIT_CHANGE_MATRIX_SEPARATOR,
 }
 
 const isSavedToLocal = computed(() => !!ProjectSaver.cachedWritable.value);
@@ -119,8 +122,16 @@ const navOptions: MenuOption[] = [
             label: "Redo",
          },
          {
-            key: Navigation.EDIT_TILE_SIZE,
+            key: Navigation.EDIT_CHANGE_TILE_SIZE,
             label: "Change tile size...",
+         },
+         {
+            key: Navigation.EDIT_CHANGE_EMPTY_MATRIX_ID,
+            label: "Change empty matrix ID...",
+         },
+         {
+            key: Navigation.EDIT_CHANGE_MATRIX_SEPARATOR,
+            label: "Change matrix separator...",
          },
       ],
    },
@@ -179,8 +190,14 @@ function handleSelect(e: Navigation) {
          break;
       case Navigation.EDIT_REDO:
          break;
-      case Navigation.EDIT_TILE_SIZE:
-         promptTileSize();
+      case Navigation.EDIT_CHANGE_TILE_SIZE:
+         promptChangeTileSize();
+         break;
+      case Navigation.EDIT_CHANGE_EMPTY_MATRIX_ID:
+         promptChangeEmptyMatrixId();
+         break;
+      case Navigation.EDIT_CHANGE_MATRIX_SEPARATOR:
+         promptChangeMatrixSeparator();
          break;
       case Navigation.WINDOW_SHOW_LAYERS:
          settingsStore.window.showLayers = !settingsStore.window.showLayers;
@@ -264,7 +281,7 @@ function confirmNewProject() {
    });
 }
 
-function promptTileSize() {
+function promptChangeTileSize() {
    dialog.create({
       title: "Change tile size",
       showIcon: false,
@@ -276,6 +293,44 @@ function promptTileSize() {
                   projectStore.setTileSize(n);
                },
                value: projectStore.tileSize,
+            }),
+         ]);
+      },
+      autoFocus: true,
+   });
+}
+
+function promptChangeEmptyMatrixId() {
+   dialog.create({
+      title: "Change empty matrix ID",
+      showIcon: false,
+      content() {
+         return h("div", {}, [
+            h(NInput, {
+               "onUpdate:value": (n) => {
+                  if (!n) return;
+                  projectStore.setEmptyMatrixId(n);
+               },
+               value: projectStore.emptyMatrixId,
+            }),
+         ]);
+      },
+      autoFocus: true,
+   });
+}
+
+function promptChangeMatrixSeparator() {
+   dialog.create({
+      title: "Change matrix separator",
+      showIcon: false,
+      content() {
+         return h("div", {}, [
+            h(NInput, {
+               "onUpdate:value": (n) => {
+                  if (!n) return;
+                  projectStore.setMatrixSeparator(n);
+               },
+               value: projectStore.matrixSeparator,
             }),
          ]);
       },

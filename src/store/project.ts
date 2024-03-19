@@ -170,10 +170,16 @@ export const useProjectStore = defineStore("project", () => {
 
    function setMatrixSeparator(sep: string) {
       _matrixSeparator.value = sep;
+      for (const layer of _layers) {
+         layer.matrix.setSeparator(sep);
+      }
    }
 
    function setEmptyMatrixId(id: string) {
       _emptyMatrixId.value = id;
+      for (const layer of _layers) {
+         layer.matrix.setEmptyMatrixId(id);
+      }
    }
 
    function reset() {
