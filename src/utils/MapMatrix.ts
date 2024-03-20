@@ -164,7 +164,6 @@ export class MapMatrix {
       const o2 = col <= 0 ? 0 : 1;
       this.matrix[centerRow + row - o1] ??= [];
       this.matrix[centerRow + row - o1][centerCol + col - o2] = matrixId;
-
    }
 
    add(row: number, col: number, matrixId: string) {
@@ -214,14 +213,36 @@ export class MapMatrix {
    }
 
    private clean() {
+      let maxRow = this.matrix.length;
+      let maxCol = -Infinity;
       for (let i = this.matrix.length - 1; i >= 0; i--) {
-         this.matrix[i] = this.matrix[i].filter(
-            (v) => typeof v == "string" && v.length
+         const row = this.matrix[i].filter(
+            (str) => typeof str == "string" && str.length
          );
-         if (!this.matrix[i].length) {
-            this.matrix.splice(i, 1);
-         }
+         maxCol = Math.max(maxCol, row.length);
       }
+
+      maxRow = Math.max(maxRow, 2);
+      maxCol = Math.max(maxCol, 2);
+      let maxLength = Math.max(maxRow, maxCol);
+
+      // Keep it even so that its position in designer can be consistent
+      if (maxLength % 2 != 0) {
+         maxLength++;
+      }
+
+      // Adjust matrix dimensions to make rows and columns equal
+      for (let i = 0; i < maxLength; i++) {
+         const row = (this.matrix[i] || []).filter(
+            (str) => typeof str == "string" && str.length
+         );
+         while (row.length < maxLength) {
+            row.push(this.emptyMatrixId);
+         }
+         this.matrix[i] = row;
+      }
+
+      this.trim();
    }
 }
 

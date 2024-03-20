@@ -1,12 +1,20 @@
 <template>
    <div class="flex flex-col w-full h-full">
-      <textarea v-model="value" @input="handleInput"></textarea>
+      <div class="matrix-navbar flex w-full h-8 flex-shrink-0 items-center">
+         <Navbar @save="save" :is-saved="!hasChanged"></Navbar>
+      </div>
+      <div
+         class="matrix-area flex flex-col flex-auto items-start overflow-auto"
+      >
+         <textarea v-model="value" @blur="save"></textarea>
+      </div>
    </div>
 </template>
 
 <script setup lang="ts">
 import { useThemeVars } from "naive-ui";
 import { computed, ref, watch } from "vue";
+import Navbar from "./navbar.vue";
 import { useProjectStore } from "../../store/project";
 
 const theme = useThemeVars();
@@ -17,19 +25,37 @@ const matrixStr = computed(() => {
    return projectStore.selectedLayer.matrix.toString();
 });
 
+const hasChanged = computed(() => {
+   if (!projectStore.selectedLayer) return false;
+   return matrixStr.value !== value.value;
+});
+
 const value = ref(matrixStr.value);
 
+// watch changes outside matrix-area (mostly in designer)
 watch(matrixStr, (matrixStr) => {
    value.value = matrixStr;
 });
 
-function handleInput() {
+function save() {
    if (!projectStore.selectedLayer) return "";
    projectStore.selectedLayer.matrix.fromString(value.value);
+   value.value = projectStore.selectedLayer.matrix.toString();
 }
 </script>
 
 <style scoped lang="scss">
+.matrix-navbar {
+   background: v-bind("theme.cardColor");
+   border: 1px solid v-bind("theme.dividerColor");
+   border-left: none;
+   border-right: none;
+}
+
+.matrix-area {
+   background: v-bind("theme.bodyColor");
+}
+
 textarea {
    font-family: monospace, "Courier New", Courier !important;
    width: 100%;
