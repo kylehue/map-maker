@@ -24,6 +24,7 @@ import {
    PhSelection,
    PhEraser,
    PhPaintBucket,
+   PhHand,
 } from "@phosphor-icons/vue";
 import { useProjectStore } from "../../store/project";
 
@@ -59,6 +60,8 @@ const toolIcon = computed(() => {
          });
       case "select":
          return h(PhSelection);
+      case "hand":
+         return h(PhHand);
       default:
          return h(PhCursor);
    }

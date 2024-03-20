@@ -16,6 +16,7 @@ import {
    PhPaintBrush,
    PhEraser,
    PhPaintBucket,
+   PhHand,
 } from "@phosphor-icons/vue";
 import { Tool } from "../../types";
 import { VNode, h } from "vue";
@@ -32,6 +33,11 @@ const tools: {
       tool: "move",
       label: "Move Tool",
       icon: h(PhCursor),
+   },
+   {
+      tool: "hand",
+      label: "Hand Tool",
+      icon: h(PhHand),
    },
    {
       tool: "select",

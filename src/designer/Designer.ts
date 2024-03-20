@@ -4,7 +4,7 @@ import { Camera } from "./Camera";
 import { pointToAABBCollision } from "./utils";
 import { useDesignerStore } from "../store/designer";
 import { clamp } from "../utils/clamp";
-import { Layer, Material } from "../types";
+import { Layer, Material, Tool } from "../types";
 import { useSettingsStore } from "../store/settings";
 import { useThemeVars } from "naive-ui";
 import { MapMatrix } from "../utils/MapMatrix";
@@ -77,6 +77,24 @@ export class Designer {
          this.repaint();
       });
 
+      let lastTool: Tool | null = null;
+      addEventListener("keydown", (e) => {
+         if (e.code == "Space" && this.designerStore.activeTool != "hand") {
+            lastTool = this.designerStore.activeTool;
+            this.designerStore.setActiveTool("hand");
+         }
+      });
+
+      addEventListener("keyup", () => {
+         this.designerStore.setActiveTool(lastTool ?? "move");
+      });
+
+      this.canvas.addEventListener("mousemove", (e) => {
+         if (this.designerStore.activeTool == "hand" && this.isMouseDown) {
+            this.designerStore.move(-e.movementX, -e.movementY);
+         }
+      });
+
       this.repaint();
    }
 
@@ -96,7 +114,6 @@ export class Designer {
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.fill(row, col, material.matrixId);
-      } else if (tool == "select") {
       }
    }
 

@@ -25,4 +25,10 @@ export interface Layer {
    matrix: MapMatrix;
 }
 
-export type Tool = "move" | "select" | "brush" | "eraser" | "paint-bucket";
+export type Tool =
+   | "move"
+   | "hand"
+   | "select"
+   | "brush"
+   | "eraser"
+   | "paint-bucket";
