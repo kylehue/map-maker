@@ -16,8 +16,6 @@
 
       /* Linting */
       "strict": true,
-      "noUnusedParameters": true,
-      "noFallthroughCasesInSwitch": true,
       "types": ["@types/wicg-file-system-access"]
    },
    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],

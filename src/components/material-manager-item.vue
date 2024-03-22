@@ -35,8 +35,8 @@
          </NButton>
       </template>
       <NDivider class="!mt-0" />
-      <div class="flex items-center justify-between px-12">
-         <div class="flex flex-col px-6 gap-2">
+      <div class="flex justify-between px-12">
+         <div class="flex flex-col gap-2">
             <div class="flex flex-col w-fit">
                <NText>Name</NText>
                <NInput v-model:value="material.name" class="min-w-[300px]">
@@ -47,6 +47,8 @@
                <NInput v-model:value="material.matrixId" class="min-w-[300px]">
                </NInput>
             </div>
+         </div>
+         <div class="flex flex-col gap-2">
             <div class="flex flex-col w-fit">
                <NText>Rotation</NText>
                <NSelect
@@ -74,13 +76,20 @@
                </NCheckbox>
             </div>
          </div>
-         <div class="relative size-32 flex items-center justify-center">
-            <img
-               v-if="materialTransformedImg"
-               :src="materialTransformedImg"
-               loading="lazy"
-               class="object-contain w-full h-full"
-            />
+         <div class="flex flex-col gap-2">
+            <div class="relative size-32 flex items-center justify-center">
+               <img
+                  v-if="materialTransformedImg"
+                  :src="materialTransformedImg"
+                  loading="lazy"
+                  class="object-contain w-full h-full"
+               />
+            </div>
+            <div class="flex flex-col w-full">
+               <NButton @click="useMaterialSplitter(props.material)">
+                  Split Material
+               </NButton>
+            </div>
          </div>
       </div>
    </NCollapseItem>
@@ -100,6 +109,7 @@ import type { Material, MaterialRotation } from "../types";
 import { computed, ref, watch } from "vue";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { useProjectStore } from "../store/project";
+import { useMaterialSplitter } from "../composables/use-material-splitter";
 
 const projectStore = useProjectStore();
 const props = defineProps<{

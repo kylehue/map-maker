@@ -1,5 +1,5 @@
 import { computed, reactive, ref, watch } from "vue";
-import type { Layer, Material } from "../types";
+import type { Layer, Material, MaterialSplitSettings } from "../types";
 import { defineStore } from "pinia";
 import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
@@ -18,6 +18,8 @@ export const useProjectStore = defineStore("project", () => {
    const _emptyMatrixId = ref(".");
    const _matrixSeparator = ref(" ");
    const materialsMap = new Map<string, Material>();
+   const savedMaterialSplitSettings: Record<string, MaterialSplitSettings> =
+      reactive({});
 
    const _materialsSearcher = new MiniSearch({
       fields: ["matrixId", "name"],
@@ -246,5 +248,6 @@ export const useProjectStore = defineStore("project", () => {
       reset,
       setupNewProject,
       isEmpty,
+      savedMaterialSplitSettings,
    };
 });

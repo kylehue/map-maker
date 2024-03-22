@@ -1,4 +1,5 @@
 <template>
+   <MaterialSplitter></MaterialSplitter>
    <MaterialManager></MaterialManager>
    <ContextMenu></ContextMenu>
    <div class="flex flex-col w-screen h-screen">
@@ -88,6 +89,7 @@ import LayerArea from "./panes/layer-area/index.vue";
 import { useSettingsStore } from "./store/settings";
 import ContextMenu from "./components/context-menu.vue";
 import MaterialManager from "./components/material-manager.vue";
+import MaterialSplitter from "./components/material-splitter.vue";
 import { useDesignerStore } from "./store/designer";
 
 const settingsStore = useSettingsStore();

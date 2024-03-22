@@ -15,6 +15,10 @@ export interface Material {
    matrixId: string;
    positionOrigin: MaterialPositionOrigin;
    texture: MaterialTexture;
+   splitData?: {
+      row: number;
+      column: number;
+   };
 }
 
 export interface Layer {
@@ -23,6 +27,41 @@ export interface Layer {
    isVisible: boolean;
    isLocked: boolean;
    matrix: MapMatrix;
+}
+
+export interface MaterialSplitSettings {
+   storedMatrixIds: {
+      row: number;
+      column: number;
+      matrixId: string;
+   }[];
+   split: {
+      width: number;
+      height: number;
+      gap: number;
+   };
+   cropInput: {
+      topLeft: {
+         x: number;
+         y: number;
+      };
+      topRight: {
+         x: number;
+         y: number;
+      };
+      bottomLeft: {
+         x: number;
+         y: number;
+      };
+      bottomRight: {
+         x: number;
+         y: number;
+      };
+   };
+   resizeOutput: {
+      width: number;
+      height: number;
+   };
 }
 
 export type Tool =

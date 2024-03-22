@@ -85,7 +85,7 @@ export class MaterialTexture {
       return this.imageCanvas;
    }
 
-   public getOriginalCanvas() {
+   public getOrigImageCanvas() {
       return this.origImageCanvas;
    }
 
