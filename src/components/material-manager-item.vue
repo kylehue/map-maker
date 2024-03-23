@@ -1,20 +1,20 @@
 <template>
-   <NCollapseItem :name="material.id">
+   <NCollapseItem :name="materialComputedModels.id.value">
       <template #header>
          <div class="flex items-center gap-2">
             <div class="relative flex items-center justify-center size-16">
                <img
-                  v-if="materialTransformedImg"
-                  :src="materialTransformedImg"
+                  v-if="materialComputedModels.imageCanvasUrl.value"
+                  :src="materialComputedModels.imageCanvasUrl.value"
                   loading="lazy"
                   class="object-contain w-full h-full"
                />
                <NText class="matrix-id font-bold absolute shadow">
-                  {{ material.matrixId }}
+                  {{ materialComputedModels.matrixId.value }}
                </NText>
             </div>
             <NText>
-               {{ material.name }}
+               {{ materialComputedModels.name.value }}
             </NText>
          </div>
       </template>
@@ -39,12 +39,18 @@
          <div class="flex flex-col gap-2">
             <div class="flex flex-col w-fit">
                <NText>Name</NText>
-               <NInput v-model:value="material.name" class="min-w-[300px]">
+               <NInput
+                  v-model:value="materialComputedModels.name.value"
+                  class="min-w-[300px]"
+               >
                </NInput>
             </div>
             <div class="flex flex-col w-fit">
                <NText>Matrix ID</NText>
-               <NInput v-model:value="material.matrixId" class="min-w-[300px]">
+               <NInput
+                  v-model:value="materialComputedModels.matrixId.value"
+                  class="min-w-[300px]"
+               >
                </NInput>
             </div>
          </div>
@@ -54,7 +60,7 @@
                <NSelect
                   :options="rotationOptions"
                   class="min-w-[300px]"
-                  v-model:value="rotation"
+                  v-model:value="materialComputedModels.rotation.value"
                >
                </NSelect>
             </div>
@@ -63,15 +69,23 @@
                <NSelect
                   :options="positionOriginOptions"
                   class="min-w-[300px]"
-                  v-model:value="material.positionOrigin"
+                  v-model:value="materialComputedModels.positionOrigin.value"
                >
                </NSelect>
             </div>
             <div class="flex flex-col">
-               <NCheckbox v-model:checked="isHorizontallyFlipped">
+               <NCheckbox
+                  v-model:checked="
+                     materialComputedModels.isHorizontallyFlipped.value
+                  "
+               >
                   Flip horizontally
                </NCheckbox>
-               <NCheckbox v-model:checked="isVerticallyFlipped">
+               <NCheckbox
+                  v-model:checked="
+                     materialComputedModels.isVerticallyFlipped.value
+                  "
+               >
                   Flip vertically
                </NCheckbox>
             </div>
@@ -79,16 +93,24 @@
          <div class="flex flex-col gap-2">
             <div class="relative size-32 flex items-center justify-center">
                <img
-                  v-if="materialTransformedImg"
-                  :src="materialTransformedImg"
+                  v-if="materialComputedModels.imageCanvasUrl.value"
+                  :src="materialComputedModels.imageCanvasUrl.value"
                   loading="lazy"
                   class="object-contain w-full h-full"
                />
             </div>
             <div class="flex flex-col w-full">
-               <NButton @click="useMaterialSplitter(props.material)">
-                  Split Material
-               </NButton>
+               <NTooltip :disabled="!isTransformed">
+                  <template #trigger>
+                     <NButton
+                        @click="useMaterialSplitter(props.material)"
+                        :disabled="isTransformed"
+                     >
+                        Split Material
+                     </NButton>
+                  </template>
+                  Splitting a transformed material is forbidden.
+               </NTooltip>
             </div>
          </div>
       </div>
@@ -104,21 +126,18 @@ import {
    NInput,
    NDivider,
    NSelect,
+   NTooltip,
 } from "naive-ui";
-import type { Material, MaterialRotation } from "../types";
 import { computed, ref, watch } from "vue";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { useProjectStore } from "../store/project";
 import { useMaterialSplitter } from "../composables/use-material-splitter";
+import { Material } from "../utils/Material";
 
 const projectStore = useProjectStore();
 const props = defineProps<{
    material: Material;
 }>();
-
-const materialTransformedImg = computed(() => {
-   return props.material.texture.getImageCanvasURL();
-});
 
 const rotationOptions: SelectMixedOption[] = [
    {
@@ -176,23 +195,12 @@ const positionOriginOptions: SelectMixedOption[] = [
    },
 ];
 
-const isHorizontallyFlipped = ref(
-   props.material.texture.getIsHorizontallyFlipped()
+const materialComputedModels = props.material.createComputedModels();
+
+const isTransformed = computed(
+   () =>
+      materialComputedModels.isHorizontallyFlipped.value ||
+      materialComputedModels.isVerticallyFlipped.value ||
+      materialComputedModels.rotation.value != 0
 );
-const isVerticallyFlipped = ref(
-   props.material.texture.getIsVerticallyFlipped()
-);
-const rotation = ref<MaterialRotation>(props.material.texture.getRotation());
-
-watch(isHorizontallyFlipped, (v) => {
-   props.material.texture.setHorizontallyFlipped(v);
-});
-
-watch(isVerticallyFlipped, (v) => {
-   props.material.texture.setVerticallyFlipped(v);
-});
-
-watch(rotation, (v) => {
-   props.material.texture.setRotation(v);
-});
 </script>

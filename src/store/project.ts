@@ -1,5 +1,5 @@
 import { computed, reactive, ref, watch } from "vue";
-import type { Layer, Material, MaterialSplitSettings } from "../types";
+import type { Layer, MaterialSplitSettings } from "../types";
 import { defineStore } from "pinia";
 import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
@@ -7,6 +7,13 @@ import MiniSearch from "minisearch";
 import { MaterialTexture } from "../utils/MaterialTexture";
 import { MapMatrix } from "../utils/MapMatrix";
 import { ProjectSaver } from "../utils/save";
+import {
+   isMaterialSplitterVisible,
+   materialToSplit,
+} from "../composables/use-material-splitter";
+import { focusedMaterial } from "../composables/use-material-manager";
+import { cantor } from "../utils/cantor";
+import { Material } from "../utils/Material";
 
 export const useProjectStore = defineStore("project", () => {
    const _filename = ref("untitled project");
@@ -40,7 +47,7 @@ export const useProjectStore = defineStore("project", () => {
       // update hashmap
       materialsMap.clear();
       for (const material of _materials) {
-         materialsMap.set(material.matrixId, material);
+         materialsMap.set(material.getMatrixId(), material);
       }
    });
 
@@ -99,27 +106,29 @@ export const useProjectStore = defineStore("project", () => {
 
    function createMaterial(
       name: string,
-      textureBase: string | File | HTMLImageElement
+      textureBase: string | File | HTMLImageElement | Blob,
+      options?: {
+         splitData?: Material["splitData"];
+      }
    ) {
-      const texture = reactive(new MaterialTexture()) as MaterialTexture;
-      const material: Material = {
-         id: generateId(),
-         name,
-         matrixId: _materials.length.toString(),
-         positionOrigin: "center",
-         texture: texture,
-      };
+      options ??= {};
+      const material = new Material();
+      material.setName(name);
       _materials.unshift(material);
-      texture.init(textureBase);
+      material.getTexture().init(textureBase);
+      if (options.splitData) {
+         material.setSplitData(options.splitData);
+      }
+
       return material;
    }
 
    function duplicateMaterial(material: Material) {
       for (let i = _materials.length - 1; i >= 0; i--) {
          if (_materials[i] !== material) continue;
-         const copy = Object.assign({}, material);
-         copy.id = generateId();
-         _materials.splice(i + 1, 0, copy);
+         const clone = material.clone();
+         _materials.splice(i + 1, 0, clone);
+         clone.getTexture().init(material.getTexture().getImageCanvasUrl());
          break;
       }
    }
@@ -131,6 +140,15 @@ export const useProjectStore = defineStore("project", () => {
 
          if (material === _selectedMaterial.value) {
             _selectedMaterial.value = undefined;
+         }
+
+         if (materialToSplit.value === material) {
+            materialToSplit.value = undefined;
+            isMaterialSplitterVisible.value = false;
+         }
+
+         if (focusedMaterial.value === material) {
+            focusedMaterial.value = undefined;
          }
 
          break;
@@ -151,7 +169,7 @@ export const useProjectStore = defineStore("project", () => {
       for (const result of searchResults) {
          ids.add(result.id);
       }
-      return _materials.filter((v) => ids.has(v.id));
+      return _materials.filter((v) => ids.has(v.getId()));
    }
 
    function setFilename(name: string) {
@@ -205,6 +223,60 @@ export const useProjectStore = defineStore("project", () => {
 
    reset();
 
+   /**
+    * Loads split settings to a material if there's any.
+    */
+   function loadSplittedMaterialVariants(
+      settingsName: string,
+      textureBase: Blob,
+      row: number,
+      column: number
+   ) {
+      const loadedMaterials: Material[] = [];
+      const settings = savedMaterialSplitSettings[settingsName];
+      if (!settings) return loadedMaterials;
+      const config = settings.storedMaterialConfigs[cantor(row, column)];
+      if (!config) return loadedMaterials;
+
+      for (const variant of config.variants) {
+         const material = createMaterial(variant.name, textureBase);
+         // @ts-ignore
+         material.splitDataConfig = variant;
+
+         material.setName(variant.name);
+         material.setMatrixId(variant.matrixId);
+         material.setPositionOrigin(variant.positionOrigin);
+         material.getTexture().setRotation(variant.rotation);
+         material
+            .getTexture()
+            .setHorizontallyFlipped(variant.isHorizontallyFlipped);
+         material
+            .getTexture()
+            .setVerticallyFlipped(variant.isVerticallyFlipped);
+
+         loadedMaterials.push(material);
+      }
+
+      return loadedMaterials;
+   }
+
+   function getOrCreateMaterialSplitSettings(
+      settingsName: string,
+      row: number,
+      column: number
+   ) {
+      const settings = savedMaterialSplitSettings[settingsName];
+      if (!settings) return;
+      const posId = cantor(row, column);
+      settings.storedMaterialConfigs[posId] ??= {
+         row,
+         column,
+         variants: [],
+      };
+
+      return settings.storedMaterialConfigs[posId];
+   }
+
    const filename = computed(() => _filename.value);
    const emptyMatrixId = computed(() => _emptyMatrixId.value);
    const matrixSeparator = computed(() => _matrixSeparator.value);
@@ -249,5 +321,7 @@ export const useProjectStore = defineStore("project", () => {
       setupNewProject,
       isEmpty,
       savedMaterialSplitSettings,
+      loadSplittedMaterialVariants,
+      getOrCreateMaterialSplitSettings,
    };
 });

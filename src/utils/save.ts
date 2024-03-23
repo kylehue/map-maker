@@ -2,8 +2,9 @@ import { ref } from "vue";
 import { useDesignerStore } from "../store/designer";
 import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
-import { MaterialPositionOrigin, MaterialRotation, Tool } from "../types";
+import { Tool } from "../types";
 import { Writer } from "./writer";
+import { Material } from "./Material";
 
 export namespace ProjectSaver {
    export const fileExtension = ".mpmkr";
@@ -19,10 +20,10 @@ export namespace ProjectSaver {
          materials: {
             name: string;
             matrixId: string;
-            positionOrigin: MaterialPositionOrigin;
+            positionOrigin: Material["positionOrigin"];
             texture: {
                url: string;
-               rotation: MaterialRotation;
+               rotation: Material["texture"]["rotation"];
                isHorizontallyFlipped: boolean;
                isVerticallyFlipped: boolean;
             };
@@ -85,15 +86,15 @@ export namespace ProjectSaver {
             rawMaterial.name,
             rawMaterial.texture.url
          );
-         material.positionOrigin = rawMaterial.positionOrigin;
-         material.matrixId = rawMaterial.matrixId;
-         material.texture.setHorizontallyFlipped(
-            rawMaterial.texture.isHorizontallyFlipped
-         );
-         material.texture.setVerticallyFlipped(
-            rawMaterial.texture.isVerticallyFlipped
-         );
-         material.texture.setRotation(rawMaterial.texture.rotation);
+         material.setPositionOrigin(rawMaterial.positionOrigin);
+         material.setMatrixId(rawMaterial.matrixId);
+         material
+            .getTexture()
+            .setHorizontallyFlipped(rawMaterial.texture.isHorizontallyFlipped);
+         material
+            .getTexture()
+            .setVerticallyFlipped(rawMaterial.texture.isVerticallyFlipped);
+         material.getTexture().setRotation(rawMaterial.texture.rotation);
       }
 
       // setup designer
@@ -136,15 +137,18 @@ export namespace ProjectSaver {
             }),
             materials: projectStore.materials.map((v) => {
                return {
-                  name: v.name,
-                  matrixId: v.matrixId,
-                  positionOrigin: v.positionOrigin,
+                  name: v.getName(),
+                  matrixId: v.getMatrixId(),
+                  positionOrigin: v.getPositionOrigin(),
                   texture: {
-                     url: v.texture.getOrigImageCanvasURL(),
-                     isHorizontallyFlipped:
-                        v.texture.getIsHorizontallyFlipped(),
-                     isVerticallyFlipped: v.texture.getIsVerticallyFlipped(),
-                     rotation: v.texture.getRotation(),
+                     url: v.getTexture().getOrigImageCanvasUrl(),
+                     isHorizontallyFlipped: v
+                        .getTexture()
+                        .getIsHorizontallyFlipped(),
+                     isVerticallyFlipped: v
+                        .getTexture()
+                        .getIsVerticallyFlipped(),
+                     rotation: v.getTexture().getRotation(),
                   },
                };
             }),

@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { Material } from "../types";
+import { Material } from "../utils/Material";
 
 export const isMaterialSplitterVisible = ref(false);
 export const materialToSplit = ref<Material>();

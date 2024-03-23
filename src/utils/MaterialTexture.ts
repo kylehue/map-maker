@@ -1,19 +1,19 @@
-import { MaterialRotation } from "../types";
+import { Material } from "./Material";
 
 export class MaterialTexture {
    private origImageCanvas = document.createElement("canvas");
-   private origImageCanvasURL = this.origImageCanvas.toDataURL();
+   private origImageCanvasUrl = this.origImageCanvas.toDataURL();
    private imageCanvas = document.createElement("canvas");
    private ctx = this.imageCanvas.getContext("2d")!;
-   private imageCanvasURL = this.imageCanvas.toDataURL();
-   private rotation: MaterialRotation = 0;
+   private imageCanvasUrl = this.imageCanvas.toDataURL();
+   private rotation: 90 | 180 | -90 | -180 | 0 = 0;
    private isHorizontallyFlipped = false;
    private isVerticallyFlipped = false;
    constructor() {}
 
-   public init(base: File | HTMLImageElement | string) {
+   public init(base: File | HTMLImageElement | string | Blob) {
       let url;
-      if (base instanceof File) {
+      if (base instanceof File || base instanceof Blob) {
          url = URL.createObjectURL(base);
       } else if (base instanceof HTMLImageElement) {
          url = base.src;
@@ -28,9 +28,11 @@ export class MaterialTexture {
          this.origImageCanvas.height = img.height;
          const ctx = this.origImageCanvas.getContext("2d")!;
          ctx.drawImage(img, 0, 0);
-         this.origImageCanvasURL = this.origImageCanvas.toDataURL();
+         this.origImageCanvasUrl = this.origImageCanvas.toDataURL();
          this.updateCanvas();
       };
+
+      return this;
    }
 
    private updateCanvas() {
@@ -63,10 +65,10 @@ export class MaterialTexture {
          origHeight
       );
       this.ctx.restore();
-      this.imageCanvasURL = this.imageCanvas.toDataURL();
+      this.imageCanvasUrl = this.imageCanvas.toDataURL();
    }
 
-   public setRotation(rotation: MaterialRotation) {
+   public setRotation(rotation: MaterialTexture["rotation"]) {
       this.rotation = rotation;
       this.updateCanvas();
    }
@@ -89,12 +91,12 @@ export class MaterialTexture {
       return this.origImageCanvas;
    }
 
-   public getImageCanvasURL() {
-      return this.imageCanvasURL;
+   public getImageCanvasUrl() {
+      return this.imageCanvasUrl;
    }
 
-   public getOrigImageCanvasURL() {
-      return this.origImageCanvasURL;
+   public getOrigImageCanvasUrl() {
+      return this.origImageCanvasUrl;
    }
 
    public getIsHorizontallyFlipped() {

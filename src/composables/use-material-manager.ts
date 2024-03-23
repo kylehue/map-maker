@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { Material } from "../types";
+import { Material } from "../utils/Material";
 
 export const isMaterialManagerVisible = ref(false);
 export const focusedMaterial = ref<Material>();

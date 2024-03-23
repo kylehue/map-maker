@@ -11,8 +11,8 @@
             }"
          >
             <img
-               v-if="materialTransformedImg"
-               :src="materialTransformedImg"
+               v-if="materialComputedModels.imageCanvasUrl.value"
+               :src="materialComputedModels.imageCanvasUrl.value"
                loading="lazy"
                class="object-contain w-full h-full"
             />
@@ -20,11 +20,11 @@
                v-if="settingsStore.materialArea.showMatrixId"
                class="absolute font-bold matrix-id"
             >
-               {{ material.matrixId }}
+               {{ materialComputedModels.matrixId.value }}
             </span>
          </div>
       </template>
-      {{ material.name }}
+      {{ materialComputedModels.name.value }}
    </NTooltip>
 </template>
 
@@ -32,10 +32,10 @@
 import { useThemeVars, NTooltip, DropdownOption } from "naive-ui";
 import { useSettingsStore } from "../../store/settings";
 import { useProjectStore } from "../../store/project";
-import type { Material } from "../../types";
 import { computed } from "vue";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useContextMenu } from "../../composables/use-context-menu";
+import { Material } from "../../utils/Material";
 
 const props = defineProps<{
    material: Material;
@@ -45,9 +45,7 @@ const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
 
-const materialTransformedImg = computed(() =>
-   props.material.texture.getImageCanvasURL()
-);
+const materialComputedModels = props.material.createComputedModels();
 
 enum MaterialContextMenu {
    OPEN_IN_MANAGER,

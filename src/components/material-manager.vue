@@ -54,7 +54,7 @@
                <NCollapse
                   class="flex flex-col overflow-auto h-full px-4 pb-8"
                   :trigger-areas="['main', 'arrow']"
-                  :expanded-names="focusedMaterial?.id"
+                  :expanded-names="focusedMaterial?.getId()"
                >
                   <template
                      v-for="material in materialsComputed"
@@ -99,7 +99,7 @@ watch(searchMaterialText, () => {
 const materialsComputed = computed(() => {
    if (focusedMaterial.value) {
       return projectStore.materials.filter(
-         (v) => v.id === focusedMaterial.value?.id
+         (v) => v.getId() === focusedMaterial.value?.getId()
       );
    }
    return projectStore.searchMaterial(searchMaterialText.value);

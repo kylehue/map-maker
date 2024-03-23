@@ -1,14 +1,10 @@
 import { useMouse } from "@vueuse/core";
 import { useProjectStore } from "../store/project";
 import { Camera } from "./Camera";
-import { pointToAABBCollision } from "./utils";
 import { useDesignerStore } from "../store/designer";
-import { clamp } from "../utils/clamp";
-import { Layer, Material, Tool } from "../types";
+import { Layer, Tool } from "../types";
 import { useSettingsStore } from "../store/settings";
-import { useThemeVars } from "naive-ui";
-import { MapMatrix } from "../utils/MapMatrix";
-import { map } from "../utils/map";
+import { Material } from "../utils/Material";
 
 const { x: mouseX, y: mouseY } = useMouse();
 
@@ -107,13 +103,13 @@ export class Designer {
       const material = this.projectStore.selectedMaterial;
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.add(row, col, material.matrixId);
+         layer.matrix.add(row, col, material.getMatrixId());
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
          layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.fill(row, col, material.matrixId);
+         layer.matrix.fill(row, col, material.getMatrixId());
       }
    }
 
@@ -201,7 +197,7 @@ export class Designer {
                }
                if (this.settingsStore.designerArea.showMatrixId) {
                   this.writeText(
-                     material.matrixId,
+                     material.getMatrixId(),
                      x + tileSize / 2,
                      y + tileSize / 2,
                      this.settingsStore.designerArea.showMaterial
@@ -216,7 +212,7 @@ export class Designer {
 
    private getTransformedImageInfo(material: Material) {
       const tileSize = this.projectStore.tileSize || 1;
-      const image = material.texture.getImageCanvas();
+      const image = material.getTexture().getImageCanvas();
       const width = image.width;
       const height = image.height;
 
@@ -224,7 +220,7 @@ export class Designer {
       let x = -width / 2 + tileSize / 2;
       let y = -height / 2 + tileSize / 2;
 
-      switch (material.positionOrigin) {
+      switch (material.getPositionOrigin()) {
          case "top":
             y += height / 2 - tileSize / 2;
             break;

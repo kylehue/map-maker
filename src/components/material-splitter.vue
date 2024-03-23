@@ -10,15 +10,15 @@
       <Transition name="bounce" appear>
          <NCard
             v-if="isMaterialSplitterVisible"
-            title="Split Material"
             closable
+            title="Split Material"
             class="w-fit h-5/6 shadow-2xl"
             content-class="relative flex flex-col w-full h-full overflow-hidden"
             @close="() => (isMaterialSplitterVisible = false)"
          >
             <div class="flex items-center gap-4 overflow-auto">
                <div class="flex relative">
-                  <div class="cropper">
+                  <div class="cropper" v-if="data.isCroppingInputEnabled">
                      <span
                         class="top-left"
                         @mousedown="
@@ -56,7 +56,11 @@
                         "
                      ></span>
                   </div>
-                  <canvas ref="canvasRef"></canvas>
+                  <canvas
+                     ref="canvasRef"
+                     :width="computedCanvasSize.width"
+                     :height="computedCanvasSize.height"
+                  ></canvas>
                </div>
                <div class="flex flex-col w-full h-full overflow-hidden">
                   <div
@@ -68,6 +72,9 @@
                            <NInputNumber
                               v-model:value="data.split.width"
                               placeholder=""
+                              :precision="0"
+                              :min="0"
+                              :max="computedMaterialSize.width"
                            >
                               <template #prefix>
                                  <NText :depth="3">width:</NText>
@@ -76,33 +83,31 @@
                            <NInputNumber
                               v-model:value="data.split.height"
                               placeholder=""
+                              :precision="0"
+                              :min="0"
+                              :max="computedMaterialSize.height"
                            >
                               <template #prefix>
                                  <NText :depth="3">height:</NText>
-                              </template>
-                           </NInputNumber>
-                           <NInputNumber
-                              v-model:value="data.split.gap"
-                              placeholder=""
-                           >
-                              <template #prefix>
-                                 <NText :depth="3">gap:</NText>
                               </template>
                            </NInputNumber>
                         </div>
                      </div>
                      <NDivider class="!m-0"></NDivider>
                      <div class="flex flex-col w-full">
-                        <NText>
+                        <NCheckbox
+                           v-model:checked="data.isCroppingInputEnabled"
+                        >
                            Crop Input
-                           <NText :depth="3" class="text-xs">(optional)</NText>
-                        </NText>
+                        </NCheckbox>
                         <div class="flex flex-col gap-1">
                            <NInputNumber
                               v-model:value="cropModel.x.value"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isCroppingInputEnabled"
                               :min="0"
+                              :max="computedMaterialSize.width"
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">x:</NText>
@@ -111,8 +116,10 @@
                            <NInputNumber
                               v-model:value="cropModel.y.value"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isCroppingInputEnabled"
                               :min="0"
+                              :max="computedMaterialSize.height"
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">y:</NText>
@@ -121,11 +128,12 @@
                            <NInputNumber
                               v-model:value="cropModel.width.value"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isCroppingInputEnabled"
                               :min="0"
                               :max="
                                  computedMaterialSize.width - computedCropData.x
                               "
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">width:</NText>
@@ -134,12 +142,13 @@
                            <NInputNumber
                               v-model:value="cropModel.height.value"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isCroppingInputEnabled"
                               :min="0"
                               :max="
                                  computedMaterialSize.height -
                                  computedCropData.y
                               "
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">height:</NText>
@@ -149,15 +158,17 @@
                      </div>
                      <NDivider class="!m-0"></NDivider>
                      <div class="flex flex-col w-full">
-                        <NText>
+                        <NCheckbox
+                           v-model:checked="data.isResizingOutputsEnabled"
+                        >
                            Resize Split Outputs
-                           <NText :depth="3" class="text-xs">(optional)</NText>
-                        </NText>
+                        </NCheckbox>
                         <div class="flex flex-col gap-1">
                            <NInputNumber
                               v-model:value="data.resizeOutput.width"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isResizingOutputsEnabled"
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">width:</NText>
@@ -166,7 +177,8 @@
                            <NInputNumber
                               v-model:value="data.resizeOutput.height"
                               placeholder=""
-                              clearable
+                              :disabled="!data.isResizingOutputsEnabled"
+                              :precision="0"
                            >
                               <template #prefix>
                                  <NText :depth="3">height:</NText>
@@ -187,6 +199,7 @@
                            >
                               <template #action>
                                  <NButton
+                                    v-if="!!selectedSplitSettingsOption"
                                     quaternary
                                     type="error"
                                     class="w-full"
@@ -220,7 +233,13 @@
                         <NCheckbox v-model:checked="data.deleteOriginal">
                            Delete original
                         </NCheckbox>
-                        <NButton class="w-full">Split</NButton>
+                        <NButton
+                           class="w-full"
+                           @click="handleSplit"
+                           :loading="data.isLoadingSplit"
+                        >
+                           Split
+                        </NButton>
                      </div>
                   </div>
                </div>
@@ -243,6 +262,7 @@ import {
    useThemeVars,
    useMessage,
    useDialog,
+   NP,
 } from "naive-ui";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { computed, h, reactive, ref, watch } from "vue";
@@ -253,11 +273,18 @@ import {
 } from "../composables/use-material-splitter";
 import { useProjectStore } from "../store/project";
 import { clamp } from "../utils/clamp";
+import MaterialWorker from "../worker/material-worker?worker";
+import { postAsync } from "../utils/worker-utils";
+import { MaterialSplitJobData } from "../types";
+import { useWindowSize } from "@vueuse/core";
+import { SplittedMaterials } from "../worker/material-worker";
 
+const materialWorker = new MaterialWorker();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
 const message = useMessage();
 const dialog = useDialog();
+const { width: innerWidth, height: innerHeight } = useWindowSize();
 const canvasRef = ref<HTMLCanvasElement>();
 const ctxRef = ref<CanvasRenderingContext2D>();
 
@@ -271,7 +298,6 @@ const data = reactive({
    split: {
       width: 32,
       height: 32,
-      gap: 0,
    },
    cropInput: {
       topLeft: {
@@ -297,6 +323,9 @@ const data = reactive({
    },
    deleteOriginal: true,
    settingsName: "",
+   isResizingOutputsEnabled: false,
+   isCroppingInputEnabled: false,
+   isLoadingSplit: false,
 });
 
 const cropModel = {
@@ -305,6 +334,7 @@ const cropModel = {
          return data.cropInput.topLeft.x;
       },
       set(x: number) {
+         x = parseInt(x.toFixed());
          data.cropInput.topLeft.x = x;
          fixCropperSides("topLeft");
       },
@@ -314,6 +344,7 @@ const cropModel = {
          return data.cropInput.topLeft.y;
       },
       set(y: number) {
+         y = parseInt(y.toFixed());
          data.cropInput.topLeft.y = y;
          fixCropperSides("topLeft");
       },
@@ -323,6 +354,7 @@ const cropModel = {
          return data.cropInput.topRight.x - data.cropInput.topLeft.x;
       },
       set(width: number) {
+         width = parseInt(width.toFixed());
          data.cropInput.topRight.x = data.cropInput.topLeft.x + width;
          fixCropperSides("topRight");
       },
@@ -332,11 +364,20 @@ const cropModel = {
          return data.cropInput.bottomLeft.y - data.cropInput.topLeft.y;
       },
       set(height: number) {
+         height = parseInt(height.toFixed());
          data.cropInput.bottomLeft.y = data.cropInput.topLeft.y + height;
          fixCropperSides("bottomLeft");
       },
    }),
 };
+
+const computedCanvasSize = computed(() => {
+   const imgSize = computedMaterialSize.value;
+   const maxWidth = innerWidth.value * 0.6;
+   const maxHeight = innerHeight.value * 0.6;
+   const ratio = Math.min(maxWidth / imgSize.width, maxHeight / imgSize.height);
+   return { width: imgSize.width * ratio, height: imgSize.height * ratio };
+});
 
 const computedMaterialSize = computed(() => {
    const result = {
@@ -345,7 +386,7 @@ const computedMaterialSize = computed(() => {
    };
    const material = materialToSplit.value;
    if (!material) return result;
-   const materialImg = material.texture.getOrigImageCanvas();
+   const materialImg = material.getTexture().getOrigImageCanvas();
    result.width = materialImg.width;
    result.height = materialImg.height;
    return result;
@@ -406,11 +447,106 @@ const splitSettingsOptions = computed(() => {
 
 const selectedSplitSettingsOption = ref<string | null>(null);
 
+async function handleSplit() {
+   const material = materialToSplit.value;
+   if (!material) return;
+
+   const totalMaterials = parseInt(
+      (
+         (computedCropData.value.width / data.split.width) *
+         (computedCropData.value.height / data.split.height)
+      ).toFixed()
+   );
+
+   let doProceed = true;
+   if (totalMaterials > 100) {
+      doProceed = await new Promise<boolean>((resolve) => {
+         dialog.warning({
+            title: "Split Material",
+            content: `${totalMaterials} materials will be created. Are you sure you want to split?`,
+            positiveText: "Split",
+            positiveButtonProps: { quaternary: true },
+            onPositiveClick(e) {
+               resolve(true);
+            },
+            onClose() {
+               resolve(false);
+            },
+         });
+      });
+   }
+
+   if (!doProceed) return;
+   const img = material.getTexture().getOrigImageCanvasUrl();
+   if (!img) return;
+   data.isLoadingSplit = true;
+   const splitJobData: MaterialSplitJobData = {
+      ...data,
+      imageUrl: img,
+   };
+
+   const result = await postAsync(materialWorker, "split", splitJobData);
+   if (result) {
+      const settingsName = selectedSplitSettingsOption.value;
+      const splittedMaterials: SplittedMaterials =
+         result.data.splittedMaterials;
+      for (let i = 0; i < splittedMaterials.length; i++) {
+         const splittedMaterial = splittedMaterials[i];
+         const loadedMaterials = projectStore.loadSplittedMaterialVariants(
+            settingsName ?? "",
+            splittedMaterial.blob,
+            splittedMaterial.row,
+            splittedMaterial.column
+         );
+
+         if (!loadedMaterials.length) {
+            const materialChunk = projectStore.createMaterial(
+               material.getName() + "_" + i,
+               splittedMaterial.blob
+            );
+
+            if (settingsName) {
+               materialChunk.setSplitData({
+                  settingsName,
+                  row: splittedMaterial.row,
+                  column: splittedMaterial.column,
+               });
+            }
+         }
+
+         // // load config
+         // if (settingsName) {
+
+         //    projectStore.maybeLoadSplitSettingsToMaterial(
+         //       settingsName,
+         //       materialChunk,
+         //       splittedMaterial.row,
+         //       splittedMaterial.column
+         //    );
+
+         //    materialChunk.setSplitData({
+         //       settingsName,
+         //       row: splittedMaterial.row,
+         //       column: splittedMaterial.column,
+         //    });
+         // }
+      }
+   }
+
+   if (data.deleteOriginal) {
+      projectStore.deleteMaterial(material);
+      materialToSplit.value = undefined;
+      isMaterialSplitterVisible.value = false;
+   }
+
+   data.isLoadingSplit = false;
+}
+
 function handleSaveSettings() {
    const settingsName = data.settingsName;
    projectStore.savedMaterialSplitSettings[settingsName] = {
       ...data,
-      storedMatrixIds: [],
+      storedMaterialConfigs: [],
    };
    selectedSplitSettingsOption.value = settingsName;
    message.success(`'${settingsName}' has been saved to split settings.`);
@@ -443,9 +579,10 @@ function handleDeleteSettings() {
 function repaint() {
    const ctx = ctxRef.value;
    if (!ctx) return;
+   ctx.imageSmoothingEnabled = false;
    const material = materialToSplit.value;
    if (!material) return;
-   const materialImg = material.texture.getOrigImageCanvas();
+   const materialImg = material.getTexture().getOrigImageCanvas();
 
    // draw base
    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -466,63 +603,98 @@ function repaint() {
       computedCropData.value.scaledWidth,
       computedCropData.value.scaledHeight
    );
+
+   // draw split grid
+   const sizeRatio = computedSizeRatio.value;
+   const splitCountX = computedCropData.value.width / data.split.width;
+   ctx.lineWidth = 1;
+   ctx.setLineDash([4, 4]);
+   for (let i = 1; i < splitCountX; i++) {
+      ctx.beginPath();
+      const x =
+         computedCropData.value.scaledX +
+         i * data.split.width * sizeRatio.width;
+      ctx.moveTo(x, computedCropData.value.scaledY);
+      ctx.lineTo(
+         x,
+         computedCropData.value.scaledY + computedCropData.value.scaledHeight
+      );
+      ctx.strokeStyle = "red";
+      ctx.stroke();
+      ctx.closePath();
+   }
+   const splitCountY = computedCropData.value.height / data.split.height;
+   for (let i = 1; i < splitCountY; i++) {
+      ctx.beginPath();
+      const y =
+         computedCropData.value.scaledY +
+         i * data.split.height * sizeRatio.height;
+      ctx.moveTo(computedCropData.value.scaledX, y);
+      ctx.lineTo(
+         computedCropData.value.scaledX + computedCropData.value.scaledWidth,
+         y
+      );
+      ctx.strokeStyle = "red";
+      ctx.stroke();
+      ctx.closePath();
+   }
 }
 
 function clampTopLeftSideCropper() {
-   data.cropInput.topLeft.x = clamp(
-      data.cropInput.topLeft.x,
-      0,
-      data.cropInput.bottomRight.x
+   data.cropInput.topLeft.x = parseInt(
+      clamp(data.cropInput.topLeft.x, 0, data.cropInput.bottomRight.x).toFixed()
    );
-   data.cropInput.topLeft.y = clamp(
-      data.cropInput.topLeft.y,
-      0,
-      data.cropInput.bottomRight.y
+   data.cropInput.topLeft.y = parseInt(
+      clamp(data.cropInput.topLeft.y, 0, data.cropInput.bottomRight.y).toFixed()
    );
 }
 
 function clampTopRightSideCropper() {
    const canvas = canvasRef.value;
    if (!canvas) return;
-   data.cropInput.topRight.x = clamp(
-      data.cropInput.topRight.x,
-      data.cropInput.bottomLeft.x,
-      canvas.width / computedSizeRatio.value.width
+   data.cropInput.topRight.x = parseInt(
+      clamp(
+         data.cropInput.topRight.x,
+         data.cropInput.bottomLeft.x,
+         canvas.width / computedSizeRatio.value.width
+      ).toFixed()
    );
-   data.cropInput.topRight.y = clamp(
-      data.cropInput.topRight.y,
-      0,
-      data.cropInput.bottomLeft.y
+   data.cropInput.topRight.y = parseInt(
+      clamp(data.cropInput.topRight.y, 0, data.cropInput.bottomLeft.y).toFixed()
    );
 }
 
 function clampBottomLeftSideCropper() {
    const canvas = canvasRef.value;
    if (!canvas) return;
-   data.cropInput.bottomLeft.x = clamp(
-      data.cropInput.bottomLeft.x,
-      0,
-      data.cropInput.topRight.x
+   data.cropInput.bottomLeft.x = parseInt(
+      clamp(data.cropInput.bottomLeft.x, 0, data.cropInput.topRight.x).toFixed()
    );
-   data.cropInput.bottomLeft.y = clamp(
-      data.cropInput.bottomLeft.y,
-      data.cropInput.topRight.y,
-      canvas.height / computedSizeRatio.value.height
+   data.cropInput.bottomLeft.y = parseInt(
+      clamp(
+         data.cropInput.bottomLeft.y,
+         data.cropInput.topRight.y,
+         canvas.height / computedSizeRatio.value.height
+      ).toFixed()
    );
 }
 
 function clampBottomRightSideCropper() {
    const canvas = canvasRef.value;
    if (!canvas) return;
-   data.cropInput.bottomRight.x = clamp(
-      data.cropInput.bottomRight.x,
-      data.cropInput.topLeft.x,
-      canvas.width / computedSizeRatio.value.width
+   data.cropInput.bottomRight.x = parseInt(
+      clamp(
+         data.cropInput.bottomRight.x,
+         data.cropInput.topLeft.x,
+         canvas.width / computedSizeRatio.value.width
+      ).toFixed()
    );
-   data.cropInput.bottomRight.y = clamp(
-      data.cropInput.bottomRight.y,
-      data.cropInput.topLeft.y,
-      canvas.height / computedSizeRatio.value.height
+   data.cropInput.bottomRight.y = parseInt(
+      clamp(
+         data.cropInput.bottomRight.y,
+         data.cropInput.topLeft.y,
+         canvas.height / computedSizeRatio.value.height
+      ).toFixed()
    );
 }
 
@@ -566,6 +738,17 @@ function fixCropperSides(prioritizedSide?: typeof croppersState.side) {
    }
 }
 
+function resetCropInput() {
+   data.cropInput.topLeft.x = 0;
+   data.cropInput.topLeft.y = 0;
+   data.cropInput.topRight.x = computedMaterialSize.value.width;
+   data.cropInput.topRight.y = 0;
+   data.cropInput.bottomLeft.x = 0;
+   data.cropInput.bottomLeft.y = computedMaterialSize.value.height;
+   data.cropInput.bottomRight.x = computedMaterialSize.value.width;
+   data.cropInput.bottomRight.y = computedMaterialSize.value.height;
+}
+
 function reset() {
    const currentSplitSettings = selectedSplitSettingsOption.value;
    if (currentSplitSettings) {
@@ -581,17 +764,11 @@ function reset() {
    selectedSplitSettingsOption.value = null;
    data.settingsName = "";
    data.deleteOriginal = true;
-   data.split.gap = 0;
+   data.isCroppingInputEnabled = false;
+   data.isResizingOutputsEnabled = false;
    data.split.width = projectStore.tileSize;
    data.split.height = projectStore.tileSize;
-   data.cropInput.topLeft.x = 0;
-   data.cropInput.topLeft.y = 0;
-   data.cropInput.topRight.x = computedMaterialSize.value.width;
-   data.cropInput.topRight.y = 0;
-   data.cropInput.bottomLeft.x = 0;
-   data.cropInput.bottomLeft.y = computedMaterialSize.value.height;
-   data.cropInput.bottomRight.x = computedMaterialSize.value.width;
-   data.cropInput.bottomRight.y = computedMaterialSize.value.height;
+   resetCropInput();
    data.resizeOutput.width = 0;
    data.resizeOutput.height = 0;
 }
@@ -607,8 +784,12 @@ addEventListener("mousemove", (e) => {
       const side = data.cropInput[croppersState.side];
       side.x ??= 0;
       side.y ??= 0;
-      side.x = (e.clientX - canvasBounds.left) / sizeRatio.width;
-      side.y = (e.clientY - canvasBounds.top) / sizeRatio.height;
+      side.x = parseInt(
+         ((e.clientX - canvasBounds.left) / sizeRatio.width).toFixed()
+      );
+      side.y = parseInt(
+         ((e.clientY - canvasBounds.top) / sizeRatio.height).toFixed()
+      );
       fixCropperSides(croppersState.side);
    }
 });
@@ -620,13 +801,7 @@ addEventListener("mouseup", (e) => {
 watch(canvasRef, (canvas) => {
    if (!canvas) return;
    reset();
-   canvas.width = 400;
-   canvas.height = 400;
    ctxRef.value = canvas.getContext("2d")!;
-   data.cropInput.topRight.x = computedMaterialSize.value.width;
-   data.cropInput.bottomLeft.y = computedMaterialSize.value.height;
-   data.cropInput.bottomRight.x = computedMaterialSize.value.width;
-   data.cropInput.bottomRight.y = computedMaterialSize.value.height;
    fixCropperSides();
    repaint();
 });
@@ -636,7 +811,31 @@ watch(data, () => {
    repaint();
 });
 
-watch(isMaterialSplitterVisible, (isMaterialSplitterVisible) => {
+watch(
+   () => [
+      data.split.width,
+      data.split.height,
+      data.isResizingOutputsEnabled,
+      canvasRef.value,
+   ],
+   () => {
+      if (!data.isResizingOutputsEnabled) {
+         data.resizeOutput.width = data.split.width;
+         data.resizeOutput.height = data.split.height;
+      }
+   }
+);
+
+watch(
+   () => data.isCroppingInputEnabled,
+   () => {
+      if (!data.isCroppingInputEnabled) {
+         resetCropInput();
+      }
+   }
+);
+
+watch(isMaterialSplitterVisible, () => {
    reset();
 });
 </script>
@@ -644,6 +843,7 @@ watch(isMaterialSplitterVisible, (isMaterialSplitterVisible) => {
 <style scoped lang="scss">
 .material-manager-container {
    cursor: v-bind("croppersState.isMouseDown ? 'move' : 'default'");
+   overflow: hidden;
 }
 
 .material-manager-mask {
@@ -661,6 +861,7 @@ watch(isMaterialSplitterVisible, (isMaterialSplitterVisible) => {
       height: v-bind("cropperSize + 'px'");
       opacity: v-bind("croppersState.isMouseDown ? 1.0 : 0.5");
       transition: opacity 300ms;
+      cursor: move;
    }
 
    .top-left {
