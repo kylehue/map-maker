@@ -29,21 +29,21 @@ const tools: {
    label: string;
    icon: VNode;
 }[] = [
-   {
-      tool: "move",
-      label: "Move Tool",
-      icon: h(PhCursor),
-   },
+   // {
+   //    tool: "move",
+   //    label: "Move Tool",
+   //    icon: h(PhCursor),
+   // },
    {
       tool: "hand",
       label: "Hand Tool",
       icon: h(PhHand),
    },
-   {
-      tool: "select",
-      label: "Select Tool",
-      icon: h(PhSelection),
-   },
+   // {
+   //    tool: "select",
+   //    label: "Select Tool",
+   //    icon: h(PhSelection),
+   // },
    {
       tool: "brush",
       label: "Brush Tool",
