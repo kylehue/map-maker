@@ -159,8 +159,7 @@ export class Designer {
       return [col, row];
    }
 
-   private drawTiles(layer: Layer) {
-      const ctx = this.context;
+   private drawTiles(ctx: CanvasRenderingContext2D, layer: Layer) {
       const tileSize = this.projectStore.tileSize || 1;
 
       const totalWidth = layer.matrix.getTotalWidth(tileSize);
@@ -216,6 +215,7 @@ export class Designer {
                }
                if (this.settingsStore.designerArea.showMatrixId) {
                   this.writeText(
+                     ctx,
                      material.getMatrixId(),
                      x + tileSize / 2,
                      y + tileSize / 2,
@@ -257,8 +257,7 @@ export class Designer {
       return { image, width, height, x, y };
    }
 
-   private drawMaterialTarget() {
-      const ctx = this.context;
+   private drawMaterialTarget(ctx: CanvasRenderingContext2D) {
       if (!this.projectStore.selectedMaterial) return;
       if (
          this.designerStore.activeTool != "brush" &&
@@ -277,8 +276,7 @@ export class Designer {
       ctx.restore();
    }
 
-   private drawTarget() {
-      const ctx = this.context;
+   private drawTarget(ctx: CanvasRenderingContext2D) {
       const tileSize = this.projectStore.tileSize || 1;
       const [col, row] = this.getMouseColumnRow();
       ctx.beginPath();
@@ -288,17 +286,20 @@ export class Designer {
       ctx.closePath();
    }
 
-   private drawMapBounds() {
-      const biggestLayer = this.projectStore.layers
+   private getLargestLayer() {
+      return this.projectStore.layers
          .filter((v) => v.isVisible)
          .sort((a, b) => {
             return b.matrix.getTotalWidth(1) - a.matrix.getTotalWidth(1);
          })[0];
-      if (!biggestLayer) return;
-      const ctx = this.context;
+   }
+
+   private drawMapBounds(ctx: CanvasRenderingContext2D) {
+      const largestLayer = this.getLargestLayer();
+      if (!largestLayer) return;
       const tileSize = this.projectStore.tileSize || 1;
-      const totalWidth = biggestLayer.matrix.getTotalWidth(tileSize);
-      const totalHeight = biggestLayer.matrix.getTotalHeight(tileSize);
+      const totalWidth = largestLayer.matrix.getTotalWidth(tileSize);
+      const totalHeight = largestLayer.matrix.getTotalHeight(tileSize);
       ctx.beginPath();
       ctx.rect(-totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
       ctx.strokeStyle = this.settings.mapBoundsColor;
@@ -306,8 +307,7 @@ export class Designer {
       ctx.closePath();
    }
 
-   private drawGrid() {
-      const ctx = this.context;
+   private drawGrid(ctx: CanvasRenderingContext2D) {
       ctx.lineWidth = this.designerStore.getZoomNormalizer() * 0.5;
 
       // draw center x & y lines
@@ -344,43 +344,66 @@ export class Designer {
       }
 
       ctx.font = "8px Courier New";
-      this.writeText("0x0", tileSize / 2, tileSize / 2);
+      this.writeText(ctx, "0x0", tileSize / 2, tileSize / 2);
    }
 
    private writeText(
+      ctx: CanvasRenderingContext2D,
       text: string | number,
       x: number,
       y: number,
       color = this.settings.gridColor
    ) {
-      const ctx = this.context;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = color;
       ctx.fillText(text.toString(), x, y);
    }
 
-   public repaint() {
-      const ctx = this.context;
-      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+   public repaint(ctx = this.context, raw = false) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-      this.camera.begin();
-      const position = this.designerStore.position;
-      const zoom = this.designerStore.zoom;
-      this.camera.moveTo(position.x, position.y);
-      this.camera.zoomTo(zoom);
+      if (!raw) {
+         this.camera.begin();
+         const position = this.designerStore.position;
+         const zoom = this.designerStore.zoom;
+         this.camera.moveTo(position.x, position.y);
+         this.camera.zoomTo(zoom);
+      }
 
       for (let i = this.projectStore.layers.length - 1; i >= 0; i--) {
          const layer = this.projectStore.layers[i];
          if (!layer.isVisible) continue;
-         this.drawTiles(layer);
+         this.drawTiles(ctx, layer);
       }
 
-      if (this.settingsStore.designerArea.showGrid) this.drawGrid();
-      if (this.settingsStore.designerArea.showMapBounds) this.drawMapBounds();
-      this.drawTarget();
-      this.drawMaterialTarget();
-      
-      this.camera.end();
+      if (!raw) {
+         if (this.settingsStore.designerArea.showGrid) {
+            this.drawGrid(ctx);
+         }
+
+         if (this.settingsStore.designerArea.showMapBounds) {
+            this.drawMapBounds(ctx);
+         }
+
+         this.drawTarget(ctx);
+         this.drawMaterialTarget(ctx);
+
+         this.camera.end();
+      }
+   }
+
+   public getImageCanvas() {
+      const canvas = document.createElement("canvas");
+      const largestLayer = this.getLargestLayer();
+      const tileSize = this.projectStore.tileSize || 1;
+      const totalWidth = largestLayer.matrix.getTotalWidth(tileSize);
+      const totalHeight = largestLayer.matrix.getTotalHeight(tileSize);
+      canvas.width = totalWidth;
+      canvas.height = totalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      this.repaint(ctx, true);
+      return canvas;
    }
 }

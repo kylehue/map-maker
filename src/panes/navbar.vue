@@ -43,6 +43,7 @@ import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
 import { PhStackSimple } from "@phosphor-icons/vue";
 import { ProjectSaver } from "../utils/save";
+import { useDesignerStore } from "../store/designer";
 
 enum Navigation {
    FILE_DROPDOWN,
@@ -72,6 +73,7 @@ const message = useMessage();
 const dialog = useDialog();
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
+const designerStore = useDesignerStore();
 const navActiveKey = ref<Navigation>();
 const navOptions: MenuOption[] = [
    {
@@ -193,6 +195,7 @@ function handleSelect(e: Navigation) {
       case Navigation.EXPORT_MATRIX:
          break;
       case Navigation.EXPORT_PNG:
+         handleExportPNG();
          break;
       case Navigation.EDIT_UNDO:
          projectStore.undoState();
@@ -254,6 +257,20 @@ watch(
       immediate: true,
    }
 );
+
+function handleExportPNG() {
+   const canvas =
+      designerStore.designer?.getImageCanvas() ||
+      document.createElement("canvas");
+   const dataURL = canvas.toDataURL("image/png");
+   const link = document.createElement("a");
+   link.download = "canvas_image.png";
+   link.href = dataURL;
+   link.style.display = "none";
+   document.body.appendChild(link);
+   link.click();
+   document.body.removeChild(link);
+}
 
 async function openProject() {
    try {
