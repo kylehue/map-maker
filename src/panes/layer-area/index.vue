@@ -12,10 +12,10 @@
             <Layer
                :ref="
                   (e) => {
-                     layersRef.push({
+                     layersRef[layer.id] = {
                         item: e,
                         layer,
-                     });
+                     };
                   }
                "
                :layer="layer"
@@ -34,10 +34,13 @@ import { useProjectStore } from "../../store/project";
 import type { Layer as ILayer } from "../../types";
 import { useContextMenu } from "../../composables/use-context-menu";
 
-const layersRef: {
-   item: any;
-   layer: ILayer;
-}[] = reactive([]);
+const layersRef: Record<
+   string,
+   {
+      item: any;
+      layer: ILayer;
+   }
+> = reactive({});
 const layerContainerRef = ref<HTMLDivElement>();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
@@ -74,9 +77,7 @@ function handleRightClick(e: MouseEvent) {
 }
 
 function scrollToSelectedLayerElement() {
-   const selectedLayerRef = layersRef.find(
-      (e) => e.layer === projectStore.selectedLayer
-   );
+   const selectedLayerRef = layersRef[projectStore.selectedLayer?.id ?? ""];
    if (!selectedLayerRef || !layerContainerRef.value) return;
 
    const container = layerContainerRef.value;
