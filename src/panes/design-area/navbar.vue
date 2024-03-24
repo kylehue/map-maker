@@ -183,12 +183,10 @@ const navOptions: MenuOption[] = [
 
 function moveDesigner(x: number, y: number) {
    designerStore.move(-x, -y);
-   designerStore.designer?.setFPS(60);
 }
 
 function zoomDesigner(x: number, y: number) {
    designerStore.addZoom(-(x + y) * 4);
-   designerStore.designer?.setFPS(60);
 }
 
 watch(navActiveKey, (e) => {

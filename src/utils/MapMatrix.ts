@@ -105,8 +105,6 @@ export class MapMatrix {
             col < 0 ||
             col >= this.matrix[0].length
          ) {
-            console.log(1);
-
             return;
          }
 

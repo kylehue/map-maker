@@ -23,7 +23,6 @@ export class Designer {
    private readonly projectStore = useProjectStore();
    private readonly settingsStore = useSettingsStore();
    private canvasBounds: DOMRect = this.canvas.getBoundingClientRect();
-   private fps = 60;
    private isMouseDown = false;
 
    private readonly settings = {
@@ -35,22 +34,17 @@ export class Designer {
 
    constructor() {
       this.context.imageSmoothingEnabled = false;
+      this.repaint();
+      this.initListeners();
+   }
 
-      const tick = () => {
-         this.repaint();
-         setTimeout(() => {
-            requestAnimationFrame(tick);
-         }, 1000 / this.fps);
-      };
-      tick();
-
-      addEventListener("resize", () => {
-         this.canvasBounds = this.canvas.getBoundingClientRect();
-      });
-
+   private initListeners() {
       let lastLayerSinceMouseDown: Layer | null = null;
       let lastLayerMatrixSnapshot: string | null = null;
-      this.canvas.addEventListener("mousedown", () => {
+      this.canvas.addEventListener("mousedown", (e) => {
+         e.preventDefault();
+         e.stopPropagation();
+         e.stopImmediatePropagation();
          if (!this.isMouseDown && this.projectStore.selectedLayer) {
             lastLayerSinceMouseDown = this.projectStore.selectedLayer;
             lastLayerMatrixSnapshot = lastLayerSinceMouseDown.matrix.toString();
@@ -58,6 +52,10 @@ export class Designer {
 
          this.isMouseDown = true;
          this.initTooling();
+      });
+
+      addEventListener("resize", () => {
+         this.canvasBounds = this.canvas.getBoundingClientRect();
       });
 
       addEventListener("mouseup", () => {
@@ -88,17 +86,6 @@ export class Designer {
          lastLayerMatrixSnapshot = null;
       });
 
-      this.canvas.addEventListener("mouseenter", (e) => {
-         this.fps = 60;
-         this.repaint();
-      });
-
-      this.canvas.addEventListener("mouseleave", (e) => {
-         this.isMouseDown = false;
-         this.fps = 4;
-         this.repaint();
-      });
-
       this.canvas.addEventListener("wheel", (e) => {
          this.designerStore.addZoom(e.deltaY);
          this.repaint();
@@ -110,19 +97,21 @@ export class Designer {
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
          }
+         this.repaint();
       });
 
       addEventListener("keyup", () => {
          if (lastTool) this.designerStore.setActiveTool(lastTool);
+         this.repaint();
       });
 
-      this.canvas.addEventListener("mousemove", (e) => {
+      addEventListener("mousemove", (e) => {
          if (this.designerStore.activeTool == "hand" && this.isMouseDown) {
             this.designerStore.move(-e.movementX, -e.movementY);
          }
+         this.initTooling();
+         this.repaint();
       });
-
-      this.repaint();
    }
 
    public initTooling() {
@@ -135,17 +124,16 @@ export class Designer {
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.add(row, col, material.getMatrixId());
+         this.repaint();
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
          layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
+         this.repaint();
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.fill(row, col, material.getMatrixId());
+         this.repaint();
       }
-   }
-
-   public setFPS(fps: number) {
-      this.fps = fps;
    }
 
    public setSize(width: number, height: number) {
@@ -392,8 +380,7 @@ export class Designer {
       if (this.settingsStore.designerArea.showMapBounds) this.drawMapBounds();
       this.drawTarget();
       this.drawMaterialTarget();
-      this.initTooling();
-
+      
       this.camera.end();
    }
 }

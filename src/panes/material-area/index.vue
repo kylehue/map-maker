@@ -131,7 +131,6 @@ async function handleFileUpload(data: FileUploadData) {
          projectStore.deleteMaterial(material);
       },
       () => {
-         console.log(material);
          projectStore.restoreMaterial(material);
       }
    );
