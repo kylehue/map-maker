@@ -275,9 +275,10 @@ import { useProjectStore } from "../store/project";
 import { clamp } from "../utils/clamp";
 import MaterialWorker from "../worker/material-worker?worker";
 import { postAsync } from "../utils/worker-utils";
-import { MaterialSplitJobData } from "../types";
+import { HistoryStateAction, MaterialSplitJobData } from "../types";
 import { useWindowSize } from "@vueuse/core";
 import { SplittedMaterials } from "../worker/material-worker";
+import { Material } from "../utils/Material";
 
 const materialWorker = new MaterialWorker();
 const projectStore = useProjectStore();
@@ -485,6 +486,7 @@ async function handleSplit() {
       imageUrl: img,
    };
 
+   const newMaterials: Material[] = [];
    const result = await postAsync(materialWorker, "split", splitJobData);
    if (result) {
       const settingsName = selectedSplitSettingsOption.value;
@@ -492,18 +494,20 @@ async function handleSplit() {
          result.data.splittedMaterials;
       for (let i = 0; i < splittedMaterials.length; i++) {
          const splittedMaterial = splittedMaterials[i];
-         const loadedMaterials = projectStore.loadSplittedMaterialVariants(
-            settingsName ?? "",
-            splittedMaterial.blob,
-            splittedMaterial.row,
-            splittedMaterial.column
-         );
+         const loadedMaterials =
+            await projectStore.loadSplittedMaterialVariants(
+               settingsName ?? "",
+               splittedMaterial.blob,
+               splittedMaterial.row,
+               splittedMaterial.column
+            );
 
          if (!loadedMaterials.length) {
-            const materialChunk = projectStore.createMaterial(
+            const materialChunk = await projectStore.createMaterial(
                material.getName() + "_" + i,
                splittedMaterial.blob
             );
+            newMaterials.push(materialChunk);
 
             if (settingsName) {
                materialChunk.setSplitData({
@@ -512,34 +516,36 @@ async function handleSplit() {
                   column: splittedMaterial.column,
                });
             }
+         } else {
+            newMaterials.push(...loadedMaterials);
          }
-
-         // // load config
-         // if (settingsName) {
-
-         //    projectStore.maybeLoadSplitSettingsToMaterial(
-         //       settingsName,
-         //       materialChunk,
-         //       splittedMaterial.row,
-         //       splittedMaterial.column
-         //    );
-
-         //    materialChunk.setSplitData({
-         //       settingsName,
-         //       row: splittedMaterial.row,
-         //       column: splittedMaterial.column,
-         //    });
-         // }
       }
    }
 
+   let isBaseMaterialDeleted = false;
    if (data.deleteOriginal) {
       projectStore.deleteMaterial(material);
       materialToSplit.value = undefined;
       isMaterialSplitterVisible.value = false;
+      isBaseMaterialDeleted = true;
    }
 
    data.isLoadingSplit = false;
+   projectStore.saveState(
+      "material-split",
+      () => {
+         newMaterials.forEach((v) => projectStore.deleteMaterial(v));
+         if (isBaseMaterialDeleted) {
+            projectStore.restoreMaterial(material);
+         }
+      },
+      () => {
+         newMaterials.forEach((v) => projectStore.restoreMaterial(v));
+         if (isBaseMaterialDeleted) {
+            projectStore.deleteMaterial(material);
+         }
+      }
+   );
 }
 
 function handleSaveSettings() {
@@ -576,8 +582,19 @@ function handleDeleteSettings() {
       positiveButtonProps: { quaternary: true },
       icon: () => h(PhTrashSimple),
       onPositiveClick(e) {
+         const settings = projectStore.savedMaterialSplitSettings[settingsName];
+         if (!settings) return;
          delete projectStore.savedMaterialSplitSettings[settingsName];
          selectedSplitSettingsOption.value = null;
+         projectStore.saveState(
+            "split-settings-delete",
+            () => {
+               projectStore.savedMaterialSplitSettings[settingsName] = settings;
+            },
+            () => {
+               delete projectStore.savedMaterialSplitSettings[settingsName];
+            }
+         );
       },
    });
 }

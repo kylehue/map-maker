@@ -51,11 +51,7 @@
                      quaternary
                      circle
                      :disabled="!projectStore.selectedMaterial"
-                     @click="
-                        projectStore.duplicateMaterial(
-                           projectStore.selectedMaterial!
-                        )
-                     "
+                     @click="handleDuplicateMaterial"
                   >
                      <template #icon>
                         <PhCopy />
@@ -71,11 +67,7 @@
                      quaternary
                      circle
                      :disabled="!projectStore.selectedMaterial"
-                     @click="
-                        projectStore.deleteMaterial(
-                           projectStore.selectedMaterial!
-                        )
-                     "
+                     @click="handleDeleteMaterial"
                   >
                      <template #icon>
                         <PhTrashSimple />
@@ -126,13 +118,56 @@ type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
 
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
-function handleFileUpload(data: FileUploadData) {
+async function handleFileUpload(data: FileUploadData) {
    if (!data.file.file) return;
-   projectStore.createMaterial(data.file.file.name, data.file.file);
+   const material = await projectStore.createMaterial(
+      data.file.file.name,
+      data.file.file
+   );
+   projectStore.saveState(
+      "material-upload",
+      () => {
+         projectStore.deleteMaterial(material);
+      },
+      () => {
+         projectStore.restoreMaterial(material);
+      }
+   );
 }
 
 function toggleShowMatrixId() {
    settingsStore.materialArea.showMatrixId =
       !settingsStore.materialArea.showMatrixId;
+}
+
+function handleDuplicateMaterial() {
+   const material = projectStore.selectedMaterial;
+   if (!material) return;
+   const duplicatedMaterial = projectStore.duplicateMaterial(material);
+   if (!duplicatedMaterial) return;
+   projectStore.saveState(
+      "material-duplicate",
+      () => {
+         projectStore.deleteMaterial(duplicatedMaterial);
+      },
+      () => {
+         projectStore.restoreMaterial(duplicatedMaterial);
+      }
+   );
+}
+
+function handleDeleteMaterial() {
+   const material = projectStore.selectedMaterial;
+   if (!material) return;
+   projectStore.deleteMaterial(material);
+   projectStore.saveState(
+      "material-delete",
+      () => {
+         projectStore.restoreMaterial(material);
+      },
+      () => {
+         projectStore.deleteMaterial(material);
+      }
+   );
 }
 </script>

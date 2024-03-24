@@ -61,14 +61,23 @@ export namespace ProjectSaver {
       };
    }
 
-   export function loadFromJSON(json: ProjectJSON, filename?: string) {
+   export interface LoadFromJSONOptions {
+      filename?: string;
+      projectOnly?: boolean;
+      keepHistory?: boolean;
+   }
+
+   export async function loadFromJSON(
+      json: ProjectJSON,
+      options: LoadFromJSONOptions = {}
+   ) {
       const projectStore = useProjectStore();
       const settingsStore = useSettingsStore();
       const designerStore = useDesignerStore();
 
       // setup project
       projectStore.reset();
-      projectStore.deleteLayer(projectStore.layers[0]);
+      if (!options.keepHistory) projectStore.clearHistory();
       projectStore.setEmptyMatrixId(json.project.emptyMatrixId);
       projectStore.setMatrixSeparator(json.project.matrixSeparator);
       projectStore.setTileSize(json.project.tileSize);
@@ -83,7 +92,7 @@ export namespace ProjectSaver {
 
       // add materials
       for (const rawMaterial of json.project.materials) {
-         const material = projectStore.createMaterial(
+         const material = await projectStore.createMaterial(
             rawMaterial.name,
             rawMaterial.texture.url
          );
@@ -103,31 +112,35 @@ export namespace ProjectSaver {
          projectStore.savedMaterialSplitSettings[settings.name] = settings;
       }
 
-      if (filename) {
-         projectStore.setFilename(filename);
+      if (options.filename) {
+         projectStore.setFilename(options.filename);
       }
 
-      // setup designer
-      designerStore.setZoom(json.designer.zoom);
-      designerStore.setActiveTool(json.designer.activeTool);
-      designerStore.position.x = json.designer.position.x;
-      designerStore.position.y = json.designer.position.y;
+      if (!options.projectOnly) {
+         // setup designer
+         designerStore.setZoom(json.designer.zoom);
+         designerStore.setActiveTool(json.designer.activeTool);
+         designerStore.position.x = json.designer.position.x;
+         designerStore.position.y = json.designer.position.y;
 
-      // setup settings
-      settingsStore.window.showMatrix = json.settings.window.showMatrix;
-      settingsStore.window.showMaterials = json.settings.window.showMaterials;
-      settingsStore.window.showLayers = json.settings.window.showLayers;
-      settingsStore.window.showToolbar = json.settings.window.showToolbar;
-      settingsStore.designerArea.showGrid = json.settings.designerArea.showGrid;
-      settingsStore.designerArea.showMatrixId =
-         json.settings.designerArea.showMatrixId;
-      settingsStore.designerArea.showMaterial =
-         json.settings.designerArea.showMaterial;
-      settingsStore.designerArea.showMapBounds =
-         json.settings.designerArea.showMapBounds;
-      settingsStore.materialArea.showMatrixId =
-         json.settings.materialArea.showMatrixId;
-      settingsStore.isAutosaveEnabled = json.settings.isAutosaveEnabled;
+         // setup settings
+         settingsStore.window.showMatrix = json.settings.window.showMatrix;
+         settingsStore.window.showMaterials =
+            json.settings.window.showMaterials;
+         settingsStore.window.showLayers = json.settings.window.showLayers;
+         settingsStore.window.showToolbar = json.settings.window.showToolbar;
+         settingsStore.designerArea.showGrid =
+            json.settings.designerArea.showGrid;
+         settingsStore.designerArea.showMatrixId =
+            json.settings.designerArea.showMatrixId;
+         settingsStore.designerArea.showMaterial =
+            json.settings.designerArea.showMaterial;
+         settingsStore.designerArea.showMapBounds =
+            json.settings.designerArea.showMapBounds;
+         settingsStore.materialArea.showMatrixId =
+            json.settings.materialArea.showMatrixId;
+         settingsStore.isAutosaveEnabled = json.settings.isAutosaveEnabled;
+      }
    }
 
    export function toJSON(): ProjectJSON {
@@ -239,7 +252,9 @@ export namespace ProjectSaver {
             // Load project from json
             const file = await handler.getFile();
             const fileContent = await file.text();
-            loadFromJSON(deserialize(fileContent), file.name);
+            loadFromJSON(deserialize(fileContent), {
+               filename: file.name,
+            });
          } catch (e) {
             console.warn(e);
          }

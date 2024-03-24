@@ -1,5 +1,5 @@
 import { computed, reactive, ref, watch } from "vue";
-import type { Layer, MaterialSplitSettings } from "../types";
+import { HistoryStateAction, Layer, MaterialSplitSettings } from "../types";
 import { defineStore } from "pinia";
 import { generateId } from "../utils/generate-id";
 import { clamp } from "../utils/clamp";
@@ -27,6 +27,13 @@ export const useProjectStore = defineStore("project", () => {
    const materialsMap = new Map<string, Material>();
    const savedMaterialSplitSettings: Record<string, MaterialSplitSettings> =
       reactive({});
+   const maxHistoryState = 200;
+   const historyStates: {
+      action: HistoryStateAction;
+      undo: Function;
+      redo: Function;
+   }[] = reactive([]);
+   const historyStateIndex = ref(0);
 
    const _materialsSearcher = new MiniSearch({
       fields: ["matrixId", "name"],
@@ -51,28 +58,107 @@ export const useProjectStore = defineStore("project", () => {
       }
    });
 
+   function saveState(
+      action: HistoryStateAction,
+      undoFunction: Function,
+      redoFunction: Function
+   ) {
+      // clear future
+      historyStates.splice(historyStateIndex.value + 1);
+
+      // save
+      historyStates.push({
+         action,
+         undo: undoFunction,
+         redo: redoFunction,
+      });
+      historyStateIndex.value = historyStates.length - 1;
+
+      if (historyStates.length > maxHistoryState) {
+         historyStates.shift();
+      }
+   }
+
+   function timeTravel(step: number) {
+      if (!historyStates.length || !step) return;
+      const targetStateIndex = clamp(
+         historyStateIndex.value + step,
+         0,
+         historyStates.length - 1
+      );
+
+      const operation = step < 0 ? "undo" : "redo";
+      const stepDir = operation == "undo" ? -1 : 1;
+      for (
+         // If operation is redo, start after the current state
+         let i =
+            operation == "redo"
+               ? historyStateIndex.value + 1
+               : historyStateIndex.value;
+         operation == "redo" ? i <= targetStateIndex : i > targetStateIndex;
+         i += stepDir
+      ) {
+         const state = historyStates[i];
+         if (!state) continue;
+
+         // If operation is undo, we must undo the current state.
+         if (i === historyStateIndex.value && operation == "undo") {
+            state.undo();
+         } else {
+            state[operation]();
+         }
+      }
+
+      historyStateIndex.value = targetStateIndex;
+   }
+
+   function undoState() {
+      timeTravel(-1);
+   }
+
+   function redoState() {
+      timeTravel(1);
+   }
+
+   function peekUndo() {
+      return historyStates[historyStateIndex.value - 1] as
+         | (typeof historyStates)[number]
+         | undefined;
+   }
+
+   function peekRedo() {
+      return historyStates[historyStateIndex.value + 1] as
+         | (typeof historyStates)[number]
+         | undefined;
+   }
+
    function duplicateLayer(layer: Layer) {
       for (let i = _layers.length - 1; i >= 0; i--) {
-         if (_layers[i] !== layer) continue;
+         if (_layers[i].id !== layer.id) continue;
          const copy = Object.assign({}, layer);
          copy.id = generateId();
          copy.name += " copy";
          _layers.splice(i + 1, 0, copy);
-         break;
+         return copy;
       }
    }
 
    function deleteLayer(layer: Layer) {
       for (let i = _layers.length - 1; i >= 0; i--) {
-         if (_layers[i] !== layer) continue;
+         if (_layers[i].id !== layer.id) continue;
          _layers.splice(i, 1);
 
-         if (layer === _selectedLayer.value) {
+         if (layer.id === _selectedLayer.value?.id) {
             _selectedLayer.value = undefined;
          }
 
          break;
       }
+   }
+
+   function restoreLayer(layer: Layer) {
+      if (_layers.find((v) => v.id === layer.id)) return;
+      _layers.unshift(layer);
    }
 
    function createLayer(name = "new layer") {
@@ -93,7 +179,7 @@ export const useProjectStore = defineStore("project", () => {
       if (layer.isLocked) return;
       const currentIndex = _layers.indexOf(layer);
       const targetIndex = clamp(currentIndex + step, 0, _layers.length - 1);
-      const isSelected = _selectedLayer.value === layer;
+      const isSelected = _selectedLayer.value?.id === layer.id;
 
       deleteLayer(layer);
       _layers.splice(targetIndex, 0, layer);
@@ -104,7 +190,7 @@ export const useProjectStore = defineStore("project", () => {
       return materialsMap.get(matrixId);
    }
 
-   function createMaterial(
+   async function createMaterial(
       name: string,
       textureBase: string | File | HTMLImageElement | Blob,
       options?: {
@@ -113,9 +199,9 @@ export const useProjectStore = defineStore("project", () => {
    ) {
       options ??= {};
       const material = new Material();
+      await material.getTexture().init(textureBase);
       material.setName(name);
       _materials.unshift(material);
-      material.getTexture().init(textureBase);
       if (options.splitData) {
          material.setSplitData(options.splitData);
       }
@@ -123,31 +209,37 @@ export const useProjectStore = defineStore("project", () => {
       return material;
    }
 
+   function restoreMaterial(material: Material) {
+      if (_materials.find((v) => v.getId() === material.getId())) return;
+      _materials.unshift(material);
+      material.restore();
+   }
+
    function duplicateMaterial(material: Material) {
       for (let i = _materials.length - 1; i >= 0; i--) {
-         if (_materials[i] !== material) continue;
+         if (_materials[i].getId() !== material.getId()) continue;
          const clone = material.clone();
          _materials.splice(i + 1, 0, clone);
          clone.getTexture().init(material.getTexture().getOrigImageCanvasUrl());
-         break;
+         return clone;
       }
    }
 
    function deleteMaterial(material: Material) {
       for (let i = _materials.length - 1; i >= 0; i--) {
-         if (_materials[i] !== material) continue;
+         if (_materials[i].getId() !== material.getId()) continue;
          _materials.splice(i, 1);
 
-         if (material === _selectedMaterial.value) {
+         if (material.getId() === _selectedMaterial.value?.getId()) {
             _selectedMaterial.value = undefined;
          }
 
-         if (materialToSplit.value === material) {
+         if (materialToSplit.value?.getId() === material.getId()) {
             materialToSplit.value = undefined;
             isMaterialSplitterVisible.value = false;
          }
 
-         if (focusedMaterial.value === material) {
+         if (focusedMaterial.value?.getId() === material.getId()) {
             focusedMaterial.value = undefined;
          }
 
@@ -205,7 +297,6 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function reset() {
-      _filename.value = "untitled project";
       _layers.length = 0;
       _materials.length = 0;
       _tileSize.value = 32;
@@ -215,12 +306,23 @@ export const useProjectStore = defineStore("project", () => {
       _matrixSeparator.value = " ";
       materialsMap.clear();
       _materialsSearcher.removeAll();
-      _selectedLayer.value = createLayer("Layer 1");
    }
 
    async function setupNewProject() {
       await ProjectSaver.reset();
       reset();
+      _filename.value = "untitled project";
+      _selectedLayer.value = createLayer("Layer 1");
+      saveState(
+         "start",
+         () => {},
+         () => {}
+      );
+   }
+
+   function clearHistory() {
+      historyStates.length = 0;
+      historyStateIndex.value = 0;
    }
 
    reset();
@@ -228,7 +330,7 @@ export const useProjectStore = defineStore("project", () => {
    /**
     * Loads split settings to a material if there's any.
     */
-   function loadSplittedMaterialVariants(
+   async function loadSplittedMaterialVariants(
       settingsName: string,
       textureBase: Blob,
       row: number,
@@ -241,7 +343,7 @@ export const useProjectStore = defineStore("project", () => {
       if (!config) return loadedMaterials;
 
       for (const variant of config.variants) {
-         const material = createMaterial(variant.name, textureBase);
+         const material = await createMaterial(variant.name, textureBase);
          variant.id = material.getId();
          material.setName(variant.name);
          material.setMatrixId(variant.matrixId);
@@ -297,6 +399,14 @@ export const useProjectStore = defineStore("project", () => {
          _materials.length == 0
       );
    });
+   const canRedo = computed(
+      () =>
+         historyStates.length &&
+         historyStateIndex.value < historyStates.length - 1
+   );
+   const canUndo = computed(
+      () => historyStates.length && historyStateIndex.value > 0
+   );
 
    return {
       filename,
@@ -308,6 +418,7 @@ export const useProjectStore = defineStore("project", () => {
       createLayer,
       duplicateLayer,
       deleteLayer,
+      restoreLayer,
       moveLayer,
       setFilename,
       materials,
@@ -315,6 +426,7 @@ export const useProjectStore = defineStore("project", () => {
       createMaterial,
       duplicateMaterial,
       deleteMaterial,
+      restoreMaterial,
       searchMaterial,
       tileSize,
       setTileSize,
@@ -328,5 +440,15 @@ export const useProjectStore = defineStore("project", () => {
       savedMaterialSplitSettings,
       loadSplittedMaterialVariants,
       getOrCreateMaterialSplitSettings,
+      clearHistory,
+      saveState,
+      undoState,
+      redoState,
+      canRedo,
+      canUndo,
+      peekUndo,
+      peekRedo,
+      historyStates,
+      historyStateIndex,
    };
 });

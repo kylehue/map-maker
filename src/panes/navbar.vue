@@ -187,8 +187,10 @@ function handleSelect(e: Navigation) {
       case Navigation.EXPORT_PNG:
          break;
       case Navigation.EDIT_UNDO:
+         projectStore.undoState();
          break;
       case Navigation.EDIT_REDO:
+         projectStore.redoState();
          break;
       case Navigation.EDIT_CHANGE_TILE_SIZE:
          promptChangeTileSize();

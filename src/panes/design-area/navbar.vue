@@ -8,6 +8,7 @@
                   size="tiny"
                   quaternary
                   circle
+                  @click="projectStore.undoState()"
                >
                   <template #icon>
                      <PhArrowCounterClockwise />
@@ -23,6 +24,7 @@
                   size="tiny"
                   quaternary
                   circle
+                  @click="projectStore.redoState()"
                >
                   <template #icon>
                      <PhArrowClockwise />
@@ -110,6 +112,7 @@ import {
 } from "@phosphor-icons/vue";
 import { useDesignerStore } from "../../store/designer";
 import { useSettingsStore } from "../../store/settings";
+import { useProjectStore } from "../../store/project";
 
 enum Navigation {
    DISPLAY_DROPDOWN,
@@ -122,6 +125,12 @@ enum Navigation {
    CENTER_VIEW,
 }
 
+const projectStore = useProjectStore();
+const settingsStore = useSettingsStore();
+const designerStore = useDesignerStore();
+
+(window as any).projectStore = projectStore;
+const zoomViewportButton = ref();
 const navActiveKey = ref<Navigation>();
 const navOptions: MenuOption[] = [
    {
@@ -172,9 +181,6 @@ const navOptions: MenuOption[] = [
    },
 ];
 
-const settingsStore = useSettingsStore();
-const designerStore = useDesignerStore();
-const zoomViewportButton = ref();
 function moveDesigner(x: number, y: number) {
    designerStore.move(-x, -y);
    designerStore.designer?.setFPS(60);

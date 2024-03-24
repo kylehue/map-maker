@@ -119,9 +119,22 @@ function handleRightClick(e: MouseEvent) {
    );
 }
 
-function handleFileUpload(data: FileUploadData) {
+async function handleFileUpload(data: FileUploadData) {
    if (!data.file.file) return;
-   projectStore.createMaterial(data.file.file.name, data.file.file);
+   const material = await projectStore.createMaterial(
+      data.file.file.name,
+      data.file.file
+   );
+   projectStore.saveState(
+      "material-upload",
+      () => {
+         projectStore.deleteMaterial(material);
+      },
+      () => {
+         console.log(material);
+         projectStore.restoreMaterial(material);
+      }
+   );
 }
 
 onMounted(() => {

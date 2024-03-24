@@ -11,26 +11,34 @@ export class MaterialTexture {
    private isVerticallyFlipped = false;
    constructor() {}
 
-   public init(base: File | HTMLImageElement | string | Blob) {
-      let url;
-      if (base instanceof File || base instanceof Blob) {
-         url = URL.createObjectURL(base);
-      } else if (base instanceof HTMLImageElement) {
-         url = base.src;
-      } else {
-         url = base;
-      }
+   public async init(base: File | HTMLImageElement | string | Blob) {
+      await new Promise((resolve) => {
+         let url;
+         if (base instanceof File || base instanceof Blob) {
+            url = URL.createObjectURL(base);
+         } else if (base instanceof HTMLImageElement) {
+            url = base.src;
+         } else {
+            url = base;
+         }
 
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-         this.origImageCanvas.width = img.width;
-         this.origImageCanvas.height = img.height;
-         const ctx = this.origImageCanvas.getContext("2d")!;
-         ctx.drawImage(img, 0, 0);
-         this.origImageCanvasUrl = this.origImageCanvas.toDataURL();
-         this.updateCanvas();
-      };
+         const img = new Image();
+         img.src = url;
+         img.onload = () => {
+            this.origImageCanvas.width = img.width;
+            this.origImageCanvas.height = img.height;
+            const ctx = this.origImageCanvas.getContext("2d")!;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 0, 0);
+            this.origImageCanvasUrl = this.origImageCanvas.toDataURL();
+            this.updateCanvas();
+            resolve(1);
+         };
+
+         img.onerror = () => {
+            resolve(1);
+         };
+      });
 
       return this;
    }

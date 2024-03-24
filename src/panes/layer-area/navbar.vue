@@ -1,11 +1,7 @@
 <template>
    <div class="flex w-full h-full items-center justify-between px-4">
       <div class="flex items-center">
-         <NButton
-            size="tiny"
-            secondary
-            @click="projectStore.createLayer('new layer')"
-         >
+         <NButton size="tiny" secondary @click="handleCreateLayer">
             <template #icon>
                <NIcon>
                   <PhStackSimple />
@@ -72,9 +68,7 @@
                   quaternary
                   circle
                   :disabled="!projectStore.selectedLayer"
-                  @click="
-                     () => projectStore.duplicateLayer(projectStore.selectedLayer!)
-                  "
+                  @click="handleDuplicateLayer"
                >
                   <template #icon>
                      <PhCopy />
@@ -90,9 +84,7 @@
                   quaternary
                   circle
                   :disabled="!projectStore.selectedLayer"
-                  @click="
-                     () => projectStore.deleteLayer(projectStore.selectedLayer!)
-                  "
+                  @click="handleDeleteLayer"
                >
                   <template #icon>
                      <PhTrashSimple />
@@ -119,19 +111,95 @@ import { useProjectStore } from "../../store/project";
 const projectStore = useProjectStore();
 const message = useMessage();
 
-function handleMoveLayerUp() {
-   if (projectStore.selectedLayer?.isLocked) {
+function handleDeleteLayer() {
+   const layer = projectStore.selectedLayer;
+   if (!layer) return;
+   if (layer.isLocked) {
       message.warning("This layer is locked!");
       return;
    }
-   projectStore.moveLayer(projectStore.selectedLayer!, -1);
+   projectStore.deleteLayer(layer);
+   projectStore.saveState(
+      "layer-delete",
+      () => {
+         projectStore.restoreLayer(layer);
+      },
+      () => {
+         projectStore.deleteLayer(layer);
+      }
+   );
+}
+
+function handleDuplicateLayer() {
+   const layer = projectStore.selectedLayer;
+   if (!layer) return;
+   const duplicatedLayer = projectStore.duplicateLayer(layer);
+   if (!duplicatedLayer) return;
+   projectStore.saveState(
+      "layer-duplicate",
+      () => {
+         projectStore.deleteLayer(duplicatedLayer);
+      },
+      () => {
+         projectStore.restoreLayer(duplicatedLayer);
+      }
+   );
+}
+
+function handleCreateLayer() {
+   const layer = projectStore.createLayer("new layer");
+   projectStore.saveState(
+      "layer-create",
+      () => {
+         projectStore.deleteLayer(layer);
+      },
+      () => {
+         projectStore.restoreLayer(layer);
+      }
+   );
+}
+
+function handleMoveLayerUp() {
+   const layer = projectStore.selectedLayer;
+   if (!layer) return;
+   if (layer.isLocked) {
+      message.warning("This layer is locked!");
+      return;
+   }
+   const oldIndex = projectStore.layers.indexOf(layer);
+   projectStore.moveLayer(layer, -1);
+   const newIndex = projectStore.layers.indexOf(layer);
+   if (oldIndex === newIndex) return;
+   projectStore.saveState(
+      "layer-move-up",
+      () => {
+         projectStore.moveLayer(layer, 1);
+      },
+      () => {
+         projectStore.moveLayer(layer, -1);
+      }
+   );
 }
 
 function handleMoveLayerDown() {
-   if (projectStore.selectedLayer?.isLocked) {
+   const layer = projectStore.selectedLayer;
+   if (!layer) return;
+   if (layer.isLocked) {
       message.warning("This layer is locked!");
       return;
    }
-   projectStore.moveLayer(projectStore.selectedLayer!, 1);
+   const oldIndex = projectStore.layers.indexOf(layer);
+   projectStore.moveLayer(layer, 1);
+   const newIndex = projectStore.layers.indexOf(layer);
+   if (oldIndex === newIndex) return;
+   projectStore.saveState(
+      "layer-move-down",
+      () => {
+         projectStore.moveLayer(layer, -1);
+      },
+      () => {
+         projectStore.moveLayer(layer, 1);
+      }
+   );
 }
 </script>

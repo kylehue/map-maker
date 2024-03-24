@@ -69,3 +69,26 @@ export type Tool =
    | "brush"
    | "eraser"
    | "paint-bucket";
+
+export type HistoryStateAction =
+   | "start"
+   | "split-settings-delete"
+   | "material-upload"
+   | "material-split"
+   | "material-horizontal-flip"
+   | "material-vertical-flip"
+   | "material-rotate"
+   | "material-name"
+   | "material-matrix-id"
+   | "material-position-origin"
+   | "material-duplicate"
+   | "material-delete"
+   | "layer-name"
+   | "layer-create"
+   | "layer-move-up"
+   | "layer-move-down"
+   | "layer-lock"
+   | "layer-duplicate"
+   | "layer-delete"
+   | "layer-visible"
+   | "layer-edit-matrix";

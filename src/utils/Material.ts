@@ -11,10 +11,7 @@ export class Material {
    private matrixId = generateId();
    private positionOrigin: "top" | "bottom" | "left" | "right" | "center" =
       "center";
-   // TODO: making this reactive is ugly
-   private texture: MaterialTexture = reactive(
-      new MaterialTexture()
-   ) as MaterialTexture;
+   private texture: MaterialTexture = new MaterialTexture();
    private splitData?: {
       settingsName: string;
       row: number;
@@ -116,6 +113,28 @@ export class Material {
             break;
          }
       }
+   }
+
+   public restore() {
+      // Add from split settings variants
+      if (!this.splitData) return;
+      const projectStore = useProjectStore();
+      const settings = projectStore.getOrCreateMaterialSplitSettings(
+         this.splitData.settingsName,
+         this.splitData.row,
+         this.splitData.column
+      );
+      if (!settings) return;
+      if (settings.variants.some((v) => v.id === this.id)) return;
+      settings.variants.push({
+         id: this.id,
+         isHorizontallyFlipped: this.texture.getIsHorizontallyFlipped(),
+         isVerticallyFlipped: this.texture.getIsVerticallyFlipped(),
+         rotation: this.texture.getRotation(),
+         name: this.name,
+         matrixId: this.matrixId,
+         positionOrigin: this.positionOrigin,
+      });
    }
 
    public clone() {

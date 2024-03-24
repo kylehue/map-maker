@@ -32,7 +32,6 @@
 import { useThemeVars, NTooltip, DropdownOption } from "naive-ui";
 import { useSettingsStore } from "../../store/settings";
 import { useProjectStore } from "../../store/project";
-import { computed } from "vue";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useContextMenu } from "../../composables/use-context-menu";
 import { Material } from "../../utils/Material";
@@ -74,14 +73,42 @@ function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
          useMaterialManager(props.material);
          break;
       case MaterialContextMenu.DUPLICATE:
-         projectStore.duplicateMaterial(props.material);
+         handleDuplicateMaterial();
          break;
       case MaterialContextMenu.DELETE:
-         projectStore.deleteMaterial(props.material);
+         handleDeleteMaterial();
          break;
    }
 
    hide();
+}
+
+function handleDuplicateMaterial() {
+   const duplicatedMaterial = projectStore.duplicateMaterial(props.material);
+   if (!duplicatedMaterial) return;
+   projectStore.saveState(
+      "material-duplicate",
+      () => {
+         projectStore.deleteMaterial(duplicatedMaterial);
+      },
+      () => {
+         projectStore.restoreMaterial(duplicatedMaterial);
+      }
+   );
+}
+
+function handleDeleteMaterial() {
+   const material = props.material;
+   projectStore.deleteMaterial(material);
+   projectStore.saveState(
+      "material-delete",
+      () => {
+         projectStore.restoreMaterial(material);
+      },
+      () => {
+         projectStore.deleteMaterial(material);
+      }
+   );
 }
 
 function handleRightClick(e: MouseEvent) {

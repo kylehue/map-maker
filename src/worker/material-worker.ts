@@ -55,7 +55,10 @@ async function split(data: MaterialSplitJobData) {
             data.resizeOutput.height
          );
          materials.push({
-            blob: await canvas.convertToBlob({ type: "image/png" }),
+            blob: await canvas.convertToBlob({
+               type: "image/png",
+               quality: 100,
+            }),
             row,
             column,
          });

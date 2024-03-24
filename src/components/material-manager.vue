@@ -88,6 +88,7 @@ import { PhMagnifyingGlass, PhUploadSimple } from "@phosphor-icons/vue";
 import MaterialManagerItem from "./material-manager-item.vue";
 import { useProjectStore } from "../store/project";
 import { computed, ref, watch } from "vue";
+import { HistoryStateAction } from "../types";
 
 const projectStore = useProjectStore();
 const searchMaterialText = ref("");
@@ -106,9 +107,21 @@ const materialsComputed = computed(() => {
 });
 
 type FileUploadData = Parameters<NonNullable<UploadProps["onChange"]>>[0];
-function handleFileUpload(data: FileUploadData) {
+async function handleFileUpload(data: FileUploadData) {
    if (!data.file.file) return;
-   projectStore.createMaterial(data.file.file.name, data.file.file);
+   const material = await projectStore.createMaterial(
+      data.file.file.name,
+      data.file.file
+   );
+   projectStore.saveState(
+      "material-upload",
+      () => {
+         projectStore.deleteMaterial(material);
+      },
+      () => {
+         projectStore.restoreMaterial(material);
+      }
+   );
 }
 </script>
 

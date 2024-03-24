@@ -91,10 +91,30 @@ import ContextMenu from "./components/context-menu.vue";
 import MaterialManager from "./components/material-manager.vue";
 import MaterialSplitter from "./components/material-splitter.vue";
 import { useDesignerStore } from "./store/designer";
+import { useProjectStore } from "./store/project";
 
+const projectStore = useProjectStore();
 const settingsStore = useSettingsStore();
 const designerStore = useDesignerStore();
 const theme = useThemeVars();
+
+projectStore.setupNewProject();
+
+addEventListener("keydown", (event) => {
+   if (event.ctrlKey) {
+      if (event.code == "KeyZ") {
+         event.preventDefault();
+         if (event.shiftKey) {
+            projectStore.redoState();
+         } else {
+            projectStore.undoState();
+         }
+      } else if (event.code == "KeyY") {
+         event.preventDefault();
+         projectStore.redoState();
+      }
+   }
+});
 </script>
 
 <style>

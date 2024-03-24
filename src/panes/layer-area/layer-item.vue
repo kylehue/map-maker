@@ -118,25 +118,25 @@ const contextMenuOptions: DropdownOption[] = [
 function handleContextMenuSelect(e: LayerContextMenu, hide: Function) {
    switch (e) {
       case LayerContextMenu.TOGGLE_VISIBILITY:
-         props.layer.isVisible = !props.layer.isVisible;
+         handleLayerToggleVisibility();
          break;
       case LayerContextMenu.TOGGLE_LOCK:
-         props.layer.isLocked = !props.layer.isLocked;
+         handleLayerToggleLock();
          break;
       case LayerContextMenu.DUPLICATE:
-         projectStore.duplicateLayer(props.layer);
+         handleLayerDuplicate();
          break;
       case LayerContextMenu.MOVE_UP:
-         projectStore.moveLayer(props.layer, -1);
+         handleLayerMoveUp();
          break;
       case LayerContextMenu.MOVE_DOWN:
-         projectStore.moveLayer(props.layer, 1);
+         handleLayerMoveDown();
          break;
       case LayerContextMenu.RENAME:
          isEditingLayerNameInput.value = true;
          break;
       case LayerContextMenu.DELETE:
-         projectStore.deleteLayer(props.layer);
+         handleLayerDelete();
          break;
    }
 
@@ -154,12 +154,114 @@ function handleRightClick(e: MouseEvent) {
 }
 
 function handleLayerNameInput() {
-   layerNameInputValue.value = layerNameInputValue.value.trim();
-   if (layerNameInputValue.value !== props.layer.name) {
-      props.layer.name = layerNameInputValue.value;
+   const newName = (layerNameInputValue.value =
+      layerNameInputValue.value.trim());
+   const oldName = props.layer.name;
+
+   if (oldName !== newName) {
+      props.layer.name = newName;
+      projectStore.saveState(
+         "layer-name",
+         () => {
+            props.layer.name = oldName;
+         },
+         () => {
+            props.layer.name = newName;
+         }
+      );
    }
 
    isEditingLayerNameInput.value = false;
+}
+
+function handleLayerToggleVisibility() {
+   const oldIsVisible = props.layer.isVisible;
+   const newIsVisible = !props.layer.isVisible;
+   props.layer.isVisible = newIsVisible;
+   projectStore.saveState(
+      "layer-visible",
+      () => {
+         props.layer.isVisible = oldIsVisible;
+      },
+      () => {
+         props.layer.isVisible = newIsVisible;
+      }
+   );
+}
+
+function handleLayerToggleLock() {
+   const oldIsLocked = props.layer.isLocked;
+   const newIsLocked = !props.layer.isLocked;
+   props.layer.isLocked = newIsLocked;
+   projectStore.saveState(
+      "layer-lock",
+      () => {
+         props.layer.isVisible = oldIsLocked;
+      },
+      () => {
+         props.layer.isVisible = newIsLocked;
+      }
+   );
+}
+
+function handleLayerDuplicate() {
+   const duplicatedLayer = projectStore.duplicateLayer(props.layer);
+   if (!duplicatedLayer) return;
+   projectStore.saveState(
+      "layer-duplicate",
+      () => {
+         projectStore.deleteLayer(duplicatedLayer);
+      },
+      () => {
+         projectStore.restoreLayer(duplicatedLayer);
+      }
+   );
+}
+
+function handleLayerMoveUp() {
+   const oldIndex = projectStore.layers.indexOf(props.layer);
+   projectStore.moveLayer(props.layer, -1);
+   const newIndex = projectStore.layers.indexOf(props.layer);
+   if (oldIndex === newIndex) return;
+   projectStore.saveState(
+      "layer-move-up",
+      () => {
+         projectStore.moveLayer(props.layer, 1);
+      },
+      () => {
+         projectStore.moveLayer(props.layer, -1);
+      }
+   );
+}
+
+function handleLayerMoveDown() {
+   const oldIndex = projectStore.layers.indexOf(props.layer);
+   projectStore.moveLayer(props.layer, 1);
+   const newIndex = projectStore.layers.indexOf(props.layer);
+   if (oldIndex === newIndex) return;
+   projectStore.saveState(
+      "layer-move-down",
+      () => {
+         projectStore.moveLayer(props.layer, -1);
+      },
+      () => {
+         projectStore.moveLayer(props.layer, 1);
+      }
+   );
+}
+
+function handleLayerDelete() {
+   const layer = props.layer;
+   projectStore.deleteLayer(layer);
+   projectStore.saveState(
+      "layer-delete",
+      () => {
+         projectStore.restoreLayer(layer);
+      },
+      () => {
+         projectStore.deleteLayer(layer);
+      }
+   );
 }
 
 watch(isEditingLayerNameInput, (isEditingLayer) => {

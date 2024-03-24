@@ -48,13 +48,44 @@ export class Designer {
          this.canvasBounds = this.canvas.getBoundingClientRect();
       });
 
+      let lastLayerSinceMouseDown: Layer | null = null;
+      let lastLayerMatrixSnapshot: string | null = null;
       this.canvas.addEventListener("mousedown", () => {
+         if (!this.isMouseDown && this.projectStore.selectedLayer) {
+            lastLayerSinceMouseDown = this.projectStore.selectedLayer;
+            lastLayerMatrixSnapshot = lastLayerSinceMouseDown.matrix.toString();
+         }
+
          this.isMouseDown = true;
          this.initTooling();
       });
 
       addEventListener("mouseup", () => {
          this.isMouseDown = false;
+
+         // changed?
+         const layer = lastLayerSinceMouseDown;
+         const oldMatrix = lastLayerMatrixSnapshot;
+         const newMatrix = layer?.matrix.toString();
+         if (
+            typeof lastLayerMatrixSnapshot == "string" &&
+            typeof newMatrix == "string" &&
+            layer &&
+            oldMatrix !== newMatrix
+         ) {
+            this.projectStore.saveState(
+               "layer-edit-matrix",
+               () => {
+                  layer!.matrix.fromString(oldMatrix!);
+               },
+               () => {
+                  layer!.matrix.fromString(newMatrix!);
+               }
+            );
+         }
+
+         lastLayerSinceMouseDown = null;
+         lastLayerMatrixSnapshot = null;
       });
 
       this.canvas.addEventListener("mouseenter", (e) => {
@@ -82,7 +113,7 @@ export class Designer {
       });
 
       addEventListener("keyup", () => {
-         this.designerStore.setActiveTool(lastTool ?? "move");
+         if (lastTool) this.designerStore.setActiveTool(lastTool);
       });
 
       this.canvas.addEventListener("mousemove", (e) => {
