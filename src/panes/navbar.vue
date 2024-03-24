@@ -51,6 +51,7 @@ enum Navigation {
    FILE_SAVE,
    FILE_SAVE_AS,
    FILE_EXPORT_DROPDOWN,
+   EXPORT_PROJECT,
    EXPORT_MATRIX,
    EXPORT_PNG,
    WINDOW_DROPDOWN,
@@ -97,6 +98,10 @@ const navOptions: MenuOption[] = [
             key: Navigation.FILE_EXPORT_DROPDOWN,
             label: "Export",
             children: [
+               {
+                  key: Navigation.EXPORT_PROJECT,
+                  label: "Project (.mpmkr)",
+               },
                {
                   key: Navigation.EXPORT_PNG,
                   label: "Image (.png)",
@@ -181,6 +186,9 @@ function handleSelect(e: Navigation) {
          break;
       case Navigation.FILE_SAVE_AS:
          saveProject();
+         break;
+      case Navigation.EXPORT_PROJECT:
+         ProjectSaver.download();
          break;
       case Navigation.EXPORT_MATRIX:
          break;
