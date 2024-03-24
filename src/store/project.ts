@@ -154,6 +154,10 @@ export const useProjectStore = defineStore("project", () => {
 
          break;
       }
+
+      if (!_layers.length) {
+         createLayer("empty layer");
+      }
    }
 
    function restoreLayer(layer: Layer) {
