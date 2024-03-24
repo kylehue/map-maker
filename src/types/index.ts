@@ -10,6 +10,7 @@ export interface Layer {
 }
 
 export interface MaterialSplitSettings {
+   name: string;
    storedMaterialConfigs: Record<
       number,
       {
@@ -52,11 +53,13 @@ export interface MaterialSplitSettings {
       width: number;
       height: number;
    };
+   isResizingOutputsEnabled: boolean;
+   isCroppingInputEnabled: boolean;
 }
 
 export type MaterialSplitJobData = Omit<
    MaterialSplitSettings,
-   "storedMaterialConfigs"
+   "storedMaterialConfigs" | "name"
 > & { imageUrl: string };
 
 export type Tool =

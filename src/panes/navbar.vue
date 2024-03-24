@@ -265,18 +265,11 @@ function confirmNewProject() {
    dialog.warning({
       title: "New Project",
       content: "Are you sure you want to create a new project?",
-      action() {
-         return h(
-            NButton,
-            {
-               secondary: true,
-               type: "warning",
-               onClick(e) {
-                  projectStore.setupNewProject();
-               },
-            },
-            () => "Yes"
-         );
+      positiveText: "Yes",
+      positiveButtonProps: { quaternary: true },
+      onPositiveClick(e) {
+         projectStore.setupNewProject();
+         dialog.destroyAll();
       },
    });
 }

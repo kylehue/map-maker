@@ -544,8 +544,12 @@ async function handleSplit() {
 
 function handleSaveSettings() {
    const settingsName = data.settingsName;
+   const dataCopy = JSON.parse(JSON.stringify(data));
+   delete dataCopy["settingsName"];
+   delete dataCopy["isLoadingSplit"];
    projectStore.savedMaterialSplitSettings[settingsName] = {
-      ...data,
+      ...dataCopy,
+      name: settingsName,
       storedMaterialConfigs: [],
    };
    selectedSplitSettingsOption.value = settingsName;
@@ -558,6 +562,8 @@ function handleLoadSettings(settingsName: string) {
    data.cropInput = loaded.cropInput;
    data.resizeOutput = loaded.resizeOutput;
    data.split = loaded.split;
+   data.isResizingOutputsEnabled = loaded.isResizingOutputsEnabled;
+   data.isCroppingInputEnabled = loaded.isCroppingInputEnabled;
 }
 
 function handleDeleteSettings() {

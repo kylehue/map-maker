@@ -2,7 +2,7 @@ import { ref } from "vue";
 import { useDesignerStore } from "../store/designer";
 import { useProjectStore } from "../store/project";
 import { useSettingsStore } from "../store/settings";
-import { Tool } from "../types";
+import { MaterialSplitSettings, Tool } from "../types";
 import { Writer } from "./writer";
 import { Material } from "./Material";
 
@@ -31,6 +31,7 @@ export namespace ProjectSaver {
          tileSize: number;
          emptyMatrixId: string;
          matrixSeparator: string;
+         savedMaterialSplitSettings: MaterialSplitSettings[];
       };
       settings: {
          window: {
@@ -60,7 +61,7 @@ export namespace ProjectSaver {
       };
    }
 
-   export function loadFromJSON(json: ProjectJSON) {
+   export function loadFromJSON(json: ProjectJSON, filename?: string) {
       const projectStore = useProjectStore();
       const settingsStore = useSettingsStore();
       const designerStore = useDesignerStore();
@@ -95,6 +96,15 @@ export namespace ProjectSaver {
             .getTexture()
             .setVerticallyFlipped(rawMaterial.texture.isVerticallyFlipped);
          material.getTexture().setRotation(rawMaterial.texture.rotation);
+      }
+
+      // add split settings
+      for (const settings of json.project.savedMaterialSplitSettings) {
+         projectStore.savedMaterialSplitSettings[settings.name] = settings;
+      }
+
+      if (filename) {
+         projectStore.setFilename(filename);
       }
 
       // setup designer
@@ -155,6 +165,11 @@ export namespace ProjectSaver {
             emptyMatrixId: projectStore.emptyMatrixId,
             matrixSeparator: projectStore.matrixSeparator,
             tileSize: projectStore.tileSize,
+            savedMaterialSplitSettings: JSON.parse(
+               JSON.stringify(
+                  Object.values(projectStore.savedMaterialSplitSettings)
+               )
+            ),
          },
          designer: {
             activeTool: designerStore.activeTool,
@@ -224,7 +239,7 @@ export namespace ProjectSaver {
             // Load project from json
             const file = await handler.getFile();
             const fileContent = await file.text();
-            loadFromJSON(deserialize(fileContent));
+            loadFromJSON(deserialize(fileContent), file.name);
          } catch (e) {
             console.warn(e);
          }
@@ -312,6 +327,7 @@ export namespace ProjectSaver {
       const projectStore = useProjectStore();
       if (projectStore.isEmpty) return;
       save();
+      reset();
       e.returnValue = "Changes you made may not be saved.";
       return "Changes you made may not be saved.";
    });
