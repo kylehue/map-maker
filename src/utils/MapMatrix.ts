@@ -82,9 +82,9 @@ export class MapMatrix {
       // Expand matrix if the row/col exceeds the matrix bounds
       const oldBounds = this.getBounds();
       if (
-         col <= oldBounds.left ||
+         col < oldBounds.left ||
          col >= oldBounds.right ||
-         row <= oldBounds.top ||
+         row < oldBounds.top ||
          row >= oldBounds.bottom
       ) {
          this._add(row, col, this.emptyMatrixId);
@@ -96,7 +96,7 @@ export class MapMatrix {
          row: number,
          col: number,
          matrixId: string,
-         current: string
+         targetMatrixId: string
       ) => {
          // stop if out of bounds
          if (
@@ -105,20 +105,26 @@ export class MapMatrix {
             col < 0 ||
             col >= this.matrix[0].length
          ) {
+            console.log(1);
+
             return;
          }
 
          // stop if the id is already set
-         if (this.matrix[row][col] === matrixId) return;
+         if (this.matrix[row][col] === matrixId) {
+            return;
+         }
 
-         // stop if the id is not the same
-         if (current != this.matrix[row][col]) return;
+         // stop if the current id is not equal to target id
+         if (targetMatrixId !== this.matrix[row][col]) {
+            return;
+         }
 
          this.matrix[row][col] = matrixId;
-         fill(row + 1, col, matrixId, current);
-         fill(row - 1, col, matrixId, current);
-         fill(row, col + 1, matrixId, current);
-         fill(row, col - 1, matrixId, current);
+         fill(row + 1, col, matrixId, targetMatrixId);
+         fill(row - 1, col, matrixId, targetMatrixId);
+         fill(row, col + 1, matrixId, targetMatrixId);
+         fill(row, col - 1, matrixId, targetMatrixId);
       };
 
       const centerRow = Math.ceil(this.matrix.length / 2);
