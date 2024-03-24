@@ -193,6 +193,7 @@ function handleSelect(e: Navigation) {
          ProjectSaver.download();
          break;
       case Navigation.EXPORT_MATRIX:
+         handleExportMatrix();
          break;
       case Navigation.EXPORT_PNG:
          handleExportPNG();
@@ -270,6 +271,21 @@ function handleExportPNG() {
    document.body.appendChild(link);
    link.click();
    document.body.removeChild(link);
+}
+
+function handleExportMatrix() {
+   for (const layer of projectStore.layers) {
+      const link = document.createElement("a");
+      link.download = layer.name + ".txt";
+      const str = layer.matrix.toString();
+      const blob = new Blob([str], { type: "text/plain" });
+      link.href = URL.createObjectURL(blob);
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+   }
 }
 
 async function openProject() {
