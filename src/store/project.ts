@@ -128,7 +128,7 @@ export const useProjectStore = defineStore("project", () => {
          if (_materials[i] !== material) continue;
          const clone = material.clone();
          _materials.splice(i + 1, 0, clone);
-         clone.getTexture().init(material.getTexture().getImageCanvasUrl());
+         clone.getTexture().init(material.getTexture().getOrigImageCanvasUrl());
          break;
       }
    }
@@ -150,6 +150,8 @@ export const useProjectStore = defineStore("project", () => {
          if (focusedMaterial.value === material) {
             focusedMaterial.value = undefined;
          }
+
+         material.dispose();
 
          break;
       }
@@ -240,9 +242,7 @@ export const useProjectStore = defineStore("project", () => {
 
       for (const variant of config.variants) {
          const material = createMaterial(variant.name, textureBase);
-         // @ts-ignore
-         material.splitDataConfig = variant;
-
+         variant.id = material.getId();
          material.setName(variant.name);
          material.setMatrixId(variant.matrixId);
          material.setPositionOrigin(variant.positionOrigin);
@@ -253,6 +253,11 @@ export const useProjectStore = defineStore("project", () => {
          material
             .getTexture()
             .setVerticallyFlipped(variant.isVerticallyFlipped);
+         material.setSplitData({
+            settingsName,
+            row,
+            column,
+         });
 
          loadedMaterials.push(material);
       }

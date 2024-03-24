@@ -6,7 +6,7 @@ import { cantor } from "./cantor";
 import { MaterialSplitSettings } from "../types";
 
 export class Material {
-   private id = generateId();
+   private readonly id = generateId();
    private name = "";
    private matrixId = generateId();
    private positionOrigin: "top" | "bottom" | "left" | "right" | "center" =
@@ -20,15 +20,6 @@ export class Material {
       row: number;
       column: number;
    } = undefined;
-   private splitDataConfig: MaterialSplitSettings["storedMaterialConfigs"][number]["variants"][number] =
-      {
-         name: this.name,
-         rotation: this.texture.getRotation(),
-         isHorizontallyFlipped: this.texture.getIsHorizontallyFlipped(),
-         isVerticallyFlipped: this.texture.getIsVerticallyFlipped(),
-         matrixId: this.matrixId,
-         positionOrigin: this.positionOrigin,
-      };
 
    constructor() {}
 
@@ -56,34 +47,75 @@ export class Material {
       return this.splitData;
    }
 
+   private updateSplitDataConfig() {
+      if (!this.splitData) return;
+      const projectStore = useProjectStore();
+      const settings = projectStore.getOrCreateMaterialSplitSettings(
+         this.splitData.settingsName,
+         this.splitData.row,
+         this.splitData.column
+      );
+      if (!settings) return;
+      let splitConfig = settings.variants.find((v) => v.id === this.id);
+      if (!splitConfig) {
+         splitConfig = {
+            id: this.id,
+            name: this.name,
+            matrixId: this.matrixId,
+            positionOrigin: this.positionOrigin,
+            rotation: this.texture.getRotation(),
+            isHorizontallyFlipped: this.texture.getIsHorizontallyFlipped(),
+            isVerticallyFlipped: this.texture.getIsVerticallyFlipped(),
+         };
+         settings.variants.push(splitConfig);
+         return;
+      }
+      splitConfig.name = this.name;
+      splitConfig.matrixId = this.matrixId;
+      splitConfig.positionOrigin = this.positionOrigin;
+      splitConfig.rotation = this.texture.getRotation();
+      splitConfig.isHorizontallyFlipped =
+         this.texture.getIsHorizontallyFlipped();
+      splitConfig.isVerticallyFlipped = this.texture.getIsVerticallyFlipped();
+   }
+
    public setName(name: string) {
       this.name = name;
-      this.splitDataConfig.name = name;
+      this.updateSplitDataConfig();
    }
 
    public setMatrixId(matrixId: string) {
       this.matrixId = matrixId;
-      this.splitDataConfig.matrixId = matrixId;
+      this.updateSplitDataConfig();
    }
 
    public setPositionOrigin(positionOrigin: Material["positionOrigin"]) {
       this.positionOrigin = positionOrigin;
-      this.splitDataConfig.positionOrigin = positionOrigin;
+      this.updateSplitDataConfig();
    }
 
    public setSplitData(splitData: Material["splitData"]) {
       this.splitData = splitData;
-      const projectStore = useProjectStore();
-      const settings = projectStore.getOrCreateMaterialSplitSettings(
-         splitData!.settingsName,
-         splitData!.row,
-         splitData!.column
-      );
-      settings?.variants.push(this.splitDataConfig);
+      this.updateSplitDataConfig();
    }
 
    public dispose() {
-      // TODO: remove from project store settings
+      // Remove from split settings variants
+      if (!this.splitData) return;
+      const projectStore = useProjectStore();
+      const settings = projectStore.getOrCreateMaterialSplitSettings(
+         this.splitData.settingsName,
+         this.splitData.row,
+         this.splitData.column
+      );
+      if (!settings) return;
+      for (let i = settings.variants.length - 1; i >= 0; i--) {
+         const variant = settings.variants[i];
+         if (variant.id === this.id) {
+            settings.variants.splice(i, 1);
+            break;
+         }
+      }
    }
 
    public clone() {
@@ -91,24 +123,14 @@ export class Material {
       clone.setName(this.name);
       clone.setMatrixId(this.matrixId);
       clone.setPositionOrigin(this.positionOrigin);
-      // clone.getTexture().setRotation(this.getTexture().getRotation());
-      // clone
-      //    .getTexture()
-      //    .setHorizontallyFlipped(this.getTexture().getIsHorizontallyFlipped());
-      // clone
-      //    .getTexture()
-      //    .setVerticallyFlipped(this.getTexture().getIsVerticallyFlipped());
+      clone.getTexture().setRotation(this.getTexture().getRotation());
+      clone
+         .getTexture()
+         .setHorizontallyFlipped(this.getTexture().getIsHorizontallyFlipped());
+      clone
+         .getTexture()
+         .setVerticallyFlipped(this.getTexture().getIsVerticallyFlipped());
       clone.setSplitData(this.splitData);
-      if (this.splitData) {
-         const projectStore = useProjectStore();
-         const settings = projectStore.getOrCreateMaterialSplitSettings(
-            this.splitData.settingsName,
-            this.splitData.row,
-            this.splitData.column
-         );
-         settings?.variants.push(clone.splitDataConfig);
-      }
-
       return clone;
    }
 
@@ -120,8 +142,7 @@ export class Material {
                return this.name;
             },
             set: (name: string) => {
-               this.name = name;
-               this.splitDataConfig.name = name;
+               this.setName(name);
             },
          }),
          matrixId: computed({
@@ -129,8 +150,7 @@ export class Material {
                return this.matrixId;
             },
             set: (matrixId: string) => {
-               this.matrixId = matrixId;
-               this.splitDataConfig.matrixId = matrixId;
+               this.setMatrixId(matrixId);
             },
          }),
          positionOrigin: computed({
@@ -138,8 +158,7 @@ export class Material {
                return this.positionOrigin;
             },
             set: (positionOrigin: Material["positionOrigin"]) => {
-               this.positionOrigin = positionOrigin;
-               this.splitDataConfig.positionOrigin = positionOrigin;
+               this.setPositionOrigin(positionOrigin);
             },
          }),
          rotation: computed({
@@ -148,7 +167,7 @@ export class Material {
             },
             set: (rotation: MaterialTexture["rotation"]) => {
                this.texture.setRotation(rotation);
-               this.splitDataConfig.rotation = rotation;
+               this.updateSplitDataConfig();
             },
          }),
          isHorizontallyFlipped: computed({
@@ -157,8 +176,7 @@ export class Material {
             },
             set: (isHorizontallyFlipped: boolean) => {
                this.texture.setHorizontallyFlipped(isHorizontallyFlipped);
-               this.splitDataConfig.isHorizontallyFlipped =
-                  isHorizontallyFlipped;
+               this.updateSplitDataConfig();
             },
          }),
          isVerticallyFlipped: computed({
@@ -167,7 +185,7 @@ export class Material {
             },
             set: (isVerticallyFlipped: boolean) => {
                this.texture.setVerticallyFlipped(isVerticallyFlipped);
-               this.splitDataConfig.isVerticallyFlipped = isVerticallyFlipped;
+               this.updateSplitDataConfig();
             },
          }),
          splitData: computed({
@@ -175,7 +193,7 @@ export class Material {
                return this.splitData;
             },
             set: (splitData: Material["splitData"]) => {
-               this.splitData = splitData;
+               this.setSplitData(splitData);
             },
          }),
          origImageCanvas: computed(() => this.texture.getOrigImageCanvas()),

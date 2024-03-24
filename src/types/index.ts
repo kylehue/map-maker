@@ -16,6 +16,7 @@ export interface MaterialSplitSettings {
          row: number;
          column: number;
          variants: {
+            id: string;
             matrixId: string;
             name: string;
             rotation: Material["texture"]["rotation"];
