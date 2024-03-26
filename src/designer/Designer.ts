@@ -43,8 +43,6 @@ export class Designer {
       let lastLayerMatrixSnapshot: string | null = null;
       this.canvas.addEventListener("mousedown", (e) => {
          e.preventDefault();
-         e.stopPropagation();
-         e.stopImmediatePropagation();
          if (!this.isMouseDown && this.projectStore.selectedLayer) {
             lastLayerSinceMouseDown = this.projectStore.selectedLayer;
             lastLayerMatrixSnapshot = lastLayerSinceMouseDown.matrix.toString();
