@@ -130,25 +130,8 @@ export class Designer {
          layer.matrix.fill(row, col, material.getMatrixId());
       }
 
-      this.makeLayersMatrixSizeUniform();
+      this.projectStore.makeLayersMatrixSizeUniform();
       this.repaint();
-   }
-
-   public makeLayersMatrixSizeUniform() {
-      const largestNonEmptyLayer = this.projectStore.layers
-         .filter((v) => v.isVisible)
-         .sort((a, b) => {
-            return (
-               b.matrix.getNonEmptyTotalSize() - a.matrix.getNonEmptyTotalSize()
-            );
-         })[0];
-      largestNonEmptyLayer.matrix.trim();
-
-      const size = largestNonEmptyLayer.matrix.getNonEmptyTotalSize();
-      for (const layer of this.projectStore.layers) {
-         if (layer.id === largestNonEmptyLayer.id) continue;
-         layer.matrix.setMinSize(size);
-      }
    }
 
    public setSize(width: number, height: number) {

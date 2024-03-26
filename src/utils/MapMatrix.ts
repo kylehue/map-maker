@@ -13,7 +13,7 @@ export class MapMatrix {
    }
 
    private updateMinSize() {
-      if (typeof this.minSize == "number" && this.minSize > 0) {
+      if (typeof this.minSize == "number" && this.minSize >= 0) {
          this.trim();
          if (this.matrix.length < this.minSize) {
             const half = Math.floor(this.minSize / 2);

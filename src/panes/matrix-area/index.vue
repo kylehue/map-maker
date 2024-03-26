@@ -43,7 +43,7 @@ function save() {
    if (!projectStore.selectedLayer) return "";
    projectStore.selectedLayer.matrix.fromString(value.value);
    value.value = projectStore.selectedLayer.matrix.toString();
-   designerStore.designer?.makeLayersMatrixSizeUniform();
+   projectStore.makeLayersMatrixSizeUniform();
 }
 </script>
 

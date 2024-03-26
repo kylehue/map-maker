@@ -132,6 +132,21 @@ export const useProjectStore = defineStore("project", () => {
          | undefined;
    }
 
+   function makeLayersMatrixSizeUniform() {
+      const largestNonEmptyLayer = _layers
+         .filter((v) => v.isVisible)
+         .sort((a, b) => {
+            return (
+               b.matrix.getNonEmptyTotalSize() - a.matrix.getNonEmptyTotalSize()
+            );
+         })[0];
+
+      const size = largestNonEmptyLayer.matrix.getNonEmptyTotalSize();
+      for (const layer of _layers) {
+         layer.matrix.setMinSize(size);
+      }
+   }
+
    function duplicateLayer(layer: Layer) {
       for (let i = _layers.length - 1; i >= 0; i--) {
          if (_layers[i].id !== layer.id) continue;
@@ -158,11 +173,15 @@ export const useProjectStore = defineStore("project", () => {
       if (!_layers.length) {
          createLayer("empty layer");
       }
+
+      makeLayersMatrixSizeUniform();
    }
 
    function restoreLayer(layer: Layer) {
       if (_layers.find((v) => v.id === layer.id)) return;
       _layers.unshift(layer);
+
+      makeLayersMatrixSizeUniform();
    }
 
    function createLayer(name = "new layer") {
@@ -176,6 +195,8 @@ export const useProjectStore = defineStore("project", () => {
       layer.matrix.setEmptyMatrixId(_emptyMatrixId.value);
       layer.matrix.setSeparator(_matrixSeparator.value);
       _layers.unshift(layer);
+
+      makeLayersMatrixSizeUniform();
       return layer;
    }
 
@@ -454,5 +475,6 @@ export const useProjectStore = defineStore("project", () => {
       peekRedo,
       historyStates,
       historyStateIndex,
+      makeLayersMatrixSizeUniform,
    };
 });
