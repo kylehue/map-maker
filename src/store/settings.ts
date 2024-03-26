@@ -14,7 +14,7 @@ export const useSettingsStore = defineStore("settings", () => {
    });
 
    const _materialArea = reactive({
-      showMatrixId: true,
+      showMatrixId: false,
    });
 
    const _designerArea = reactive({
