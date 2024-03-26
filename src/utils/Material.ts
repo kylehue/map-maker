@@ -140,7 +140,6 @@ export class Material {
    public clone() {
       const clone = new Material();
       clone.setName(this.name);
-      clone.setMatrixId(this.matrixId);
       clone.setPositionOrigin(this.positionOrigin);
       clone.getTexture().setRotation(this.getTexture().getRotation());
       clone
