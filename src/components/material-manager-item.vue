@@ -121,6 +121,7 @@ import {
    NDivider,
    NSelect,
    NTooltip,
+   useDialog,
 } from "naive-ui";
 import { computed, ref, watch } from "vue";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
@@ -129,6 +130,7 @@ import { useMaterialSplitter } from "../composables/use-material-splitter";
 import { Material } from "../utils/Material";
 import { HistoryStateAction } from "../types";
 
+const dialog = useDialog();
 const projectStore = useProjectStore();
 const props = defineProps<{
    material: Material;
@@ -247,25 +249,90 @@ function handleMaterialRename() {
       "material-name",
       () => {
          materialComputedModels.name.value = oldName;
+         name.value = oldName;
       },
       () => {
          materialComputedModels.name.value = newName;
+         name.value = newName;
       }
    );
 }
 
-function handleMaterialChangeMatrixId() {
+async function handleMaterialChangeMatrixId() {
    const oldMatrixId = materialComputedModels.matrixId.value;
    const newMatrixId = matrixId.value;
    if (oldMatrixId === newMatrixId) return;
+
+   // Check if any layer is using this material
+   const materialLayerMatrixRows: string[][] = [];
+   for (const layer of projectStore.layers) {
+      const matrix = layer.matrix.getMatrix();
+      for (const row of matrix) {
+         if (!row.some((v) => v === oldMatrixId)) continue;
+         materialLayerMatrixRows.push(row);
+      }
+   }
+
+   // If so, ask the user if they wanna change it in the matrix or not
+   const isIdBeingUsed = !!materialLayerMatrixRows.length;
+   let isReplaced = false;
+   if (isIdBeingUsed) {
+      await new Promise((resolve) => {
+         dialog.warning({
+            title: "Change Matrix ID",
+            content:
+               "This material has been applied within some layer matrix, do you want to replace the id in those matrices too?",
+            positiveText: "Replace",
+            positiveButtonProps: { quaternary: true },
+            onPositiveClick(e) {
+               for (const row of materialLayerMatrixRows) {
+                  for (let i = 0; i < row.length; i++) {
+                     if (row[i] !== oldMatrixId) continue;
+                     row[i] = newMatrixId;
+                  }
+               }
+               isReplaced = true;
+               resolve(1);
+            },
+            negativeText: "No",
+            negativeButtonProps: { quaternary: true },
+            onNegativeClick(e) {
+               dialog.destroyAll();
+               resolve(1);
+            },
+            onClose() {
+               resolve(1);
+            },
+         });
+      });
+   }
+
    materialComputedModels.matrixId.value = newMatrixId;
    projectStore.saveState(
       "material-matrix-id",
       () => {
          materialComputedModels.matrixId.value = oldMatrixId;
+         matrixId.value = oldMatrixId;
+         if (isReplaced) {
+            for (const row of materialLayerMatrixRows) {
+               for (let i = 0; i < row.length; i++) {
+                  if (row[i] !== newMatrixId) continue;
+                  row[i] = oldMatrixId;
+               }
+            }
+         }
       },
       () => {
          materialComputedModels.matrixId.value = newMatrixId;
+         matrixId.value = newMatrixId;
+         if (isReplaced) {
+            for (const row of materialLayerMatrixRows) {
+               for (let i = 0; i < row.length; i++) {
+                  if (row[i] !== oldMatrixId) continue;
+                  row[i] = newMatrixId;
+               }
+            }
+         }
       }
    );
 }
@@ -279,9 +346,11 @@ function handleMaterialChangePositionOrigin() {
       "material-position-origin",
       () => {
          materialComputedModels.positionOrigin.value = oldPositionOrigin;
+         positionOrigin.value = oldPositionOrigin;
       },
       () => {
          materialComputedModels.positionOrigin.value = newPositionOrigin;
+         positionOrigin.value = newPositionOrigin;
       }
    );
 }
@@ -294,9 +363,11 @@ function handleMaterialChangeRotation() {
       "material-rotate",
       () => {
          materialComputedModels.rotation.value = oldRotation;
+         rotation.value = oldRotation;
       },
       () => {
          materialComputedModels.rotation.value = newRotation;
+         rotation.value = newRotation;
       }
    );
 }
@@ -311,9 +382,12 @@ function handleMaterialChangeHorizontallyFlipped() {
       () => {
          materialComputedModels.isHorizontallyFlipped.value =
             oldHorizontallyFlipped;
+         isHorizontallyFlipped.value = oldHorizontallyFlipped;
       },
       () => {
          materialComputedModels.isHorizontallyFlipped.value =
+            newHorizontallyFlipped;
+         isHorizontallyFlipped.value =
             newHorizontallyFlipped;
       }
    );
@@ -329,9 +403,13 @@ function handleMaterialChangeVerticallyFlipped() {
       () => {
          materialComputedModels.isVerticallyFlipped.value =
             oldVerticallyFlipped;
+         isVerticallyFlipped.value =
+            oldVerticallyFlipped;
       },
       () => {
          materialComputedModels.isVerticallyFlipped.value =
+            newVerticallyFlipped;
+         isVerticallyFlipped.value =
             newVerticallyFlipped;
       }
    );
