@@ -92,6 +92,7 @@ import MaterialManager from "./components/material-manager.vue";
 import MaterialSplitter from "./components/material-splitter.vue";
 import { useDesignerStore } from "./store/designer";
 import { useProjectStore } from "./store/project";
+import { ProjectSaver } from "./utils/save";
 
 const projectStore = useProjectStore();
 const settingsStore = useSettingsStore();
@@ -112,6 +113,9 @@ addEventListener("keydown", (event) => {
       } else if (event.code == "KeyY") {
          event.preventDefault();
          projectStore.redoState();
+      } else if (event.code == "KeyS") {
+         event.preventDefault();
+         ProjectSaver.save(true);
       }
    }
 });
