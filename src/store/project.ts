@@ -336,8 +336,9 @@ export const useProjectStore = defineStore("project", () => {
    async function setupNewProject() {
       await ProjectSaver.reset();
       reset();
+      clearHistory();
       _filename.value = "untitled project";
-      _selectedLayer.value = createLayer("Layer 1");
+      _selectedLayer.value = createLayer("Layer");
       saveState(
          "start",
          () => {},
