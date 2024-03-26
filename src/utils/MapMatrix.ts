@@ -23,13 +23,7 @@ export class MapMatrix {
       this.separator = separator;
    }
 
-   getTotalWidth(tileWidth: number) {
-      if (!this.matrix.length) return 0;
-      const maxLength = Math.max(...this.matrix.map((e) => e.length));
-      return maxLength * tileWidth;
-   }
-
-   getTotalHeight(tileHeight: number) {
+   getTotalSize(tileHeight: number) {
       return this.matrix.length * tileHeight;
    }
 

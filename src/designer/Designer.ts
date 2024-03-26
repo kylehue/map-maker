@@ -162,24 +162,22 @@ export class Designer {
    private drawTiles(ctx: CanvasRenderingContext2D, layer: Layer) {
       const tileSize = this.projectStore.tileSize || 1;
 
-      const totalWidth = layer.matrix.getTotalWidth(tileSize);
-      const totalHeight = layer.matrix.getTotalHeight(tileSize);
+      const totalSize = layer.matrix.getTotalSize(tileSize);
 
       const renderTileViewportOffset = 4;
       const rowStart =
-         Math.ceil((this.camera.viewport.top + totalHeight / 2) / tileSize) +
+         Math.ceil((this.camera.viewport.top + totalSize / 2) / tileSize) +
          1 -
          renderTileViewportOffset;
       const rowEnd =
-         Math.floor(
-            (this.camera.viewport.bottom + totalHeight / 2) / tileSize
-         ) + renderTileViewportOffset;
+         Math.floor((this.camera.viewport.bottom + totalSize / 2) / tileSize) +
+         renderTileViewportOffset;
       const colStart =
-         Math.ceil((this.camera.viewport.left + totalWidth / 2) / tileSize) +
+         Math.ceil((this.camera.viewport.left + totalSize / 2) / tileSize) +
          1 -
          renderTileViewportOffset;
       const colEnd =
-         Math.floor((this.camera.viewport.right + totalWidth / 2) / tileSize) +
+         Math.floor((this.camera.viewport.right + totalSize / 2) / tileSize) +
          renderTileViewportOffset;
 
       // draw tiles
@@ -203,8 +201,8 @@ export class Designer {
                const material =
                   this.projectStore.getMaterialByMatrixId(matrixId);
                if (!material) continue;
-               const x = colIndex * tileSize - totalWidth / 2;
-               const y = rowIndex * tileSize - totalHeight / 2;
+               const x = colIndex * tileSize - totalSize / 2;
+               const y = rowIndex * tileSize - totalSize / 2;
                if (this.settingsStore.designerArea.showMaterial) {
                   const {
                      image,
@@ -290,7 +288,7 @@ export class Designer {
       return this.projectStore.layers
          .filter((v) => v.isVisible)
          .sort((a, b) => {
-            return b.matrix.getTotalWidth(1) - a.matrix.getTotalWidth(1);
+            return b.matrix.getTotalSize(1) - a.matrix.getTotalSize(1);
          })[0];
    }
 
@@ -298,10 +296,9 @@ export class Designer {
       const largestLayer = this.getLargestLayer();
       if (!largestLayer) return;
       const tileSize = this.projectStore.tileSize || 1;
-      const totalWidth = largestLayer.matrix.getTotalWidth(tileSize);
-      const totalHeight = largestLayer.matrix.getTotalHeight(tileSize);
+      const totalSize = largestLayer.matrix.getTotalSize(tileSize);
       ctx.beginPath();
-      ctx.rect(-totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
+      ctx.rect(-totalSize / 2, -totalSize / 2, totalSize, totalSize);
       ctx.strokeStyle = this.settings.mapBoundsColor;
       ctx.stroke();
       ctx.closePath();
@@ -397,10 +394,9 @@ export class Designer {
       const canvas = document.createElement("canvas");
       const largestLayer = this.getLargestLayer();
       const tileSize = this.projectStore.tileSize || 1;
-      const totalWidth = largestLayer.matrix.getTotalWidth(tileSize);
-      const totalHeight = largestLayer.matrix.getTotalHeight(tileSize);
-      canvas.width = totalWidth;
-      canvas.height = totalHeight;
+      const totalSize = largestLayer.matrix.getTotalSize(tileSize);
+      canvas.width = totalSize;
+      canvas.height = totalSize;
       const ctx = canvas.getContext("2d")!;
       ctx.translate(canvas.width / 2, canvas.height / 2);
       this.repaint(ctx, true);
