@@ -35,6 +35,7 @@
                   v-model:value="name"
                   class="min-w-[300px]"
                   @blur="handleMaterialRename"
+                  @keydown.enter="handleMaterialRename"
                >
                </NInput>
             </div>
@@ -44,6 +45,7 @@
                   v-model:value="matrixId"
                   class="min-w-[300px]"
                   @blur="handleMaterialChangeMatrixId"
+                  @keydown.enter="handleMaterialChangeMatrixId"
                >
                </NInput>
             </div>
@@ -55,7 +57,6 @@
                   :options="rotationOptions"
                   class="min-w-[300px]"
                   v-model:value="rotation"
-                  @blur="handleMaterialChangeRotation"
                >
                </NSelect>
             </div>
@@ -70,16 +71,10 @@
                </NSelect>
             </div>
             <div class="flex flex-col">
-               <NCheckbox
-                  v-model:checked="isHorizontallyFlipped"
-                  @blur="handleMaterialChangeHorizontallyFlipped"
-               >
+               <NCheckbox v-model:checked="isHorizontallyFlipped">
                   Flip horizontally
                </NCheckbox>
-               <NCheckbox
-                  v-model:checked="isVerticallyFlipped"
-                  @blur="handleMaterialChangeVerticallyFlipped"
-               >
+               <NCheckbox v-model:checked="isVerticallyFlipped">
                   Flip vertically
                </NCheckbox>
             </div>
@@ -359,6 +354,7 @@ function handleMaterialChangeRotation() {
    const oldRotation = materialComputedModels.rotation.value;
    const newRotation = rotation.value;
    if (oldRotation === newRotation) return;
+   materialComputedModels.rotation.value = newRotation;
    projectStore.saveState(
       "material-rotate",
       () => {
@@ -377,6 +373,7 @@ function handleMaterialChangeHorizontallyFlipped() {
       materialComputedModels.isHorizontallyFlipped.value;
    const newHorizontallyFlipped = isHorizontallyFlipped.value;
    if (oldHorizontallyFlipped === newHorizontallyFlipped) return;
+   materialComputedModels.isHorizontallyFlipped.value = newHorizontallyFlipped;
    projectStore.saveState(
       "material-horizontal-flip",
       () => {
@@ -387,8 +384,7 @@ function handleMaterialChangeHorizontallyFlipped() {
       () => {
          materialComputedModels.isHorizontallyFlipped.value =
             newHorizontallyFlipped;
-         isHorizontallyFlipped.value =
-            newHorizontallyFlipped;
+         isHorizontallyFlipped.value = newHorizontallyFlipped;
       }
    );
 }
@@ -398,20 +394,31 @@ function handleMaterialChangeVerticallyFlipped() {
       materialComputedModels.isVerticallyFlipped.value;
    const newVerticallyFlipped = isVerticallyFlipped.value;
    if (oldVerticallyFlipped === newVerticallyFlipped) return;
+   materialComputedModels.isVerticallyFlipped.value = newVerticallyFlipped;
    projectStore.saveState(
       "material-vertical-flip",
       () => {
          materialComputedModels.isVerticallyFlipped.value =
             oldVerticallyFlipped;
-         isVerticallyFlipped.value =
-            oldVerticallyFlipped;
+         isVerticallyFlipped.value = oldVerticallyFlipped;
       },
       () => {
          materialComputedModels.isVerticallyFlipped.value =
             newVerticallyFlipped;
-         isVerticallyFlipped.value =
-            newVerticallyFlipped;
+         isVerticallyFlipped.value = newVerticallyFlipped;
       }
    );
 }
+
+watch(rotation, () => {
+   handleMaterialChangeRotation();
+});
+
+watch(isHorizontallyFlipped, () => {
+   handleMaterialChangeHorizontallyFlipped();
+});
+
+watch(isVerticallyFlipped, () => {
+   handleMaterialChangeVerticallyFlipped();
+});
 </script>
