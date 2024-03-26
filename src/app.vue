@@ -116,6 +116,9 @@ addEventListener("keydown", (event) => {
       } else if (event.code == "KeyS") {
          event.preventDefault();
          ProjectSaver.save(true);
+      } else if (event.code == "KeyO") {
+         event.preventDefault();
+         ProjectSaver.open();
       }
    }
 });
