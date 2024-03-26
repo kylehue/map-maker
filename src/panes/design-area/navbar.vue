@@ -195,24 +195,30 @@ watch(navActiveKey, (e) => {
       case Navigation.SHOW_GRID:
          settingsStore.designerArea.showGrid =
             !settingsStore.designerArea.showGrid;
+         designerStore.designer?.repaint();
          break;
       case Navigation.SHOW_MATERIAL:
          settingsStore.designerArea.showMaterial =
             !settingsStore.designerArea.showMaterial;
+         designerStore.designer?.repaint();
          break;
       case Navigation.SHOW_MAP_BOUNDS:
          settingsStore.designerArea.showMapBounds =
             !settingsStore.designerArea.showMapBounds;
+         designerStore.designer?.repaint();
          break;
       case Navigation.SHOW_MATRIX_ID:
          settingsStore.designerArea.showMatrixId =
             !settingsStore.designerArea.showMatrixId;
+         designerStore.designer?.repaint();
          break;
       case Navigation.CENTER_VIEW:
          designerStore.centerView();
+         designerStore.designer?.repaint();
          break;
       case Navigation.RESET_VIEW:
          designerStore.resetView();
+         designerStore.designer?.repaint();
          break;
    }
 
