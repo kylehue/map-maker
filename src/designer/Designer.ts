@@ -124,15 +124,32 @@ export class Designer {
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.add(row, col, material.getMatrixId());
-         this.repaint();
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
          layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
-         this.repaint();
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.fill(row, col, material.getMatrixId());
-         this.repaint();
+      }
+
+      this.makeLayersMatrixSizeUniform();
+      this.repaint();
+   }
+
+   public makeLayersMatrixSizeUniform() {
+      const largestNonEmptyLayer = this.projectStore.layers
+         .filter((v) => v.isVisible)
+         .sort((a, b) => {
+            return (
+               b.matrix.getNonEmptyTotalSize() - a.matrix.getNonEmptyTotalSize()
+            );
+         })[0];
+      largestNonEmptyLayer.matrix.trim();
+
+      const size = largestNonEmptyLayer.matrix.getNonEmptyTotalSize();
+      for (const layer of this.projectStore.layers) {
+         if (layer.id === largestNonEmptyLayer.id) continue;
+         layer.matrix.setMinSize(size);
       }
    }
 

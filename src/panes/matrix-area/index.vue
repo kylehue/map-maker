@@ -16,9 +16,11 @@ import { useThemeVars } from "naive-ui";
 import { computed, ref, watch } from "vue";
 import Navbar from "./navbar.vue";
 import { useProjectStore } from "../../store/project";
+import { useDesignerStore } from "../../store/designer";
 
 const theme = useThemeVars();
 const projectStore = useProjectStore();
+const designerStore = useDesignerStore();
 
 const matrixStr = computed(() => {
    if (!projectStore.selectedLayer) return "";
@@ -41,6 +43,7 @@ function save() {
    if (!projectStore.selectedLayer) return "";
    projectStore.selectedLayer.matrix.fromString(value.value);
    value.value = projectStore.selectedLayer.matrix.toString();
+   designerStore.designer?.makeLayersMatrixSizeUniform();
 }
 </script>
 

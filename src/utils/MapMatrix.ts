@@ -2,8 +2,26 @@ export class MapMatrix {
    private matrix: string[][] = [];
    private emptyMatrixId = ".";
    private separator = " ";
+   private minSize: number | null = null;
+   private nonEmptyTotalSize = 0;
 
    constructor() {}
+
+   public setMinSize(minSize: number | null) {
+      this.minSize = minSize;
+      this.updateMinSize();
+   }
+
+   private updateMinSize() {
+      if (typeof this.minSize == "number" && this.minSize > 0) {
+         this.trim();
+         if (this.matrix.length < this.minSize) {
+            const half = Math.floor(this.minSize / 2);
+            this.translate(-half, -half);
+            this.translate(half, half);
+         }
+      }
+   }
 
    clear() {
       this.matrix = [];
@@ -23,8 +41,78 @@ export class MapMatrix {
       this.separator = separator;
    }
 
-   getTotalSize(tileHeight: number) {
-      return this.matrix.length * tileHeight;
+   getTotalSize(scalar = 1) {
+      return this.matrix.length * scalar;
+   }
+
+   getNonEmptyTotalSize() {
+      return this.nonEmptyTotalSize;
+   }
+
+   private _updateNonEmptyTotalSize() {
+      const maxes: number[] = [];
+      for (let q = 0; q < 4; q++) {
+         let firstNonEmptyCol: number | null = null;
+         let lastNonEmptyCol: number | null = null;
+         let firstNonEmptyRow: number | null = null;
+         let lastNonEmptyRow: number | null = null;
+
+         const qLength = Math.floor(this.matrix.length / 2);
+         let rowStart = 0;
+         let rowEnd = 0;
+         let colStart = 0;
+         let colEnd = 0;
+         if (q == 0 || q == 1) {
+            // top
+            rowStart = 0;
+            rowEnd = qLength;
+         } else {
+            // bottom
+            rowStart = qLength;
+            rowEnd = this.matrix.length;
+         }
+
+         if (q == 0 || q == 2) {
+            // left
+            colStart = 0;
+            colEnd = qLength;
+         } else {
+            // right
+            colStart = qLength;
+            colEnd = this.matrix.length;
+         }
+
+         for (let i = rowStart; i < rowEnd; i++) {
+            const row = this.matrix[i];
+            let rowIsNonEmpty = false;
+
+            for (let j = colStart; j < colEnd; j++) {
+               const col = row[j];
+               if (col !== this.emptyMatrixId) {
+                  if (firstNonEmptyCol === null) firstNonEmptyCol = j;
+                  lastNonEmptyCol = j;
+                  rowIsNonEmpty = true;
+               }
+            }
+
+            if (rowIsNonEmpty) {
+               if (firstNonEmptyRow === null) firstNonEmptyRow = i;
+               lastNonEmptyRow = i;
+            }
+         }
+
+         const maxRow =
+            firstNonEmptyRow === null || lastNonEmptyRow === null
+               ? 0
+               : lastNonEmptyRow - firstNonEmptyRow + 1;
+         const maxCol =
+            firstNonEmptyCol === null || lastNonEmptyCol === null
+               ? 0
+               : lastNonEmptyCol - firstNonEmptyCol + 1;
+         maxes.push(Math.max(maxRow, maxCol));
+      }
+
+      this.nonEmptyTotalSize = Math.max(...maxes) * 2;
    }
 
    getMatrix() {
@@ -56,6 +144,8 @@ export class MapMatrix {
             v.pop();
          });
       }
+
+      this._updateNonEmptyTotalSize();
    }
 
    private getBounds() {
@@ -129,6 +219,8 @@ export class MapMatrix {
          matrixId,
          this.matrix[centerRow + row - o1][centerCol + col - o2]
       );
+
+      this._updateNonEmptyTotalSize();
    }
 
    private _add(row: number, col: number, matrixId: string) {
