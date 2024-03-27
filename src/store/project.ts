@@ -133,6 +133,8 @@ export const useProjectStore = defineStore("project", () => {
    }
 
    function makeLayersMatrixSizeUniform() {
+      if (!_layers.length) return;
+
       const largestNonEmptyLayer = _layers
          .filter((v) => v.isVisible)
          .sort((a, b) => {
@@ -161,17 +163,13 @@ export const useProjectStore = defineStore("project", () => {
    function deleteLayer(layer: Layer) {
       for (let i = _layers.length - 1; i >= 0; i--) {
          if (_layers[i].id !== layer.id) continue;
-         _layers.splice(i, 1);
 
          if (layer.id === _selectedLayer.value?.id) {
-            _selectedLayer.value = undefined;
+            _selectedLayer.value = _layers[i + 1] ?? _layers[i - 1];
          }
 
+         _layers.splice(i, 1);
          break;
-      }
-
-      if (!_layers.length) {
-         createLayer("empty layer");
       }
 
       makeLayersMatrixSizeUniform();
@@ -184,7 +182,7 @@ export const useProjectStore = defineStore("project", () => {
       makeLayersMatrixSizeUniform();
    }
 
-   function createLayer(name = "new layer") {
+   function createLayer(name = "New layer") {
       const layer: Layer = {
          id: generateId(),
          name,
@@ -244,7 +242,9 @@ export const useProjectStore = defineStore("project", () => {
       for (let i = _materials.length - 1; i >= 0; i--) {
          if (_materials[i].getId() !== material.getId()) continue;
          const clone = material.clone();
-         await clone.getTexture().init(material.getTexture().getOrigImageCanvasUrl());
+         await clone
+            .getTexture()
+            .init(material.getTexture().getOrigImageCanvasUrl());
          _materials.splice(i + 1, 0, clone);
          return clone;
       }
@@ -253,10 +253,9 @@ export const useProjectStore = defineStore("project", () => {
    function deleteMaterial(material: Material) {
       for (let i = _materials.length - 1; i >= 0; i--) {
          if (_materials[i].getId() !== material.getId()) continue;
-         _materials.splice(i, 1);
 
          if (material.getId() === _selectedMaterial.value?.getId()) {
-            _selectedMaterial.value = undefined;
+            _selectedMaterial.value = _materials[i + 1] ?? _materials[i - 1];
          }
 
          if (materialToSplit.value?.getId() === material.getId()) {
@@ -269,6 +268,7 @@ export const useProjectStore = defineStore("project", () => {
          }
 
          material.dispose();
+         _materials.splice(i, 1);
 
          break;
       }

@@ -81,6 +81,10 @@ function handleCanvasMouseDown() {
    } else if ((tool == "brush" || tool == "paint-bucket") && !material) {
       message.warning("Please select a material.");
    }
+
+   if (layer?.isLocked) {
+      message.warning("This layer is locked!");
+   }
 }
 
 watch(
