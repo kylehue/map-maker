@@ -73,6 +73,7 @@ const isDragAndDropping = ref(false);
 const searchMaterialText = ref("");
 const materialsComputed = computed(() =>
    projectStore.searchMaterial(searchMaterialText.value)
+      .sort((a, b) => a.getName().localeCompare(b.getName()))
 );
 
 enum MaterialContextMenu {
