@@ -240,12 +240,12 @@ export const useProjectStore = defineStore("project", () => {
       material.restore();
    }
 
-   function duplicateMaterial(material: Material) {
+   async function duplicateMaterial(material: Material) {
       for (let i = _materials.length - 1; i >= 0; i--) {
          if (_materials[i].getId() !== material.getId()) continue;
          const clone = material.clone();
+         await clone.getTexture().init(material.getTexture().getOrigImageCanvasUrl());
          _materials.splice(i + 1, 0, clone);
-         clone.getTexture().init(material.getTexture().getOrigImageCanvasUrl());
          return clone;
       }
    }

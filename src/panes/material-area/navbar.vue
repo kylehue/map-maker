@@ -140,10 +140,10 @@ function toggleShowMatrixId() {
       !settingsStore.materialArea.showMatrixId;
 }
 
-function handleDuplicateMaterial() {
+async function handleDuplicateMaterial() {
    const material = projectStore.selectedMaterial;
    if (!material) return;
-   const duplicatedMaterial = projectStore.duplicateMaterial(material);
+   const duplicatedMaterial = await projectStore.duplicateMaterial(material);
    if (!duplicatedMaterial) return;
    projectStore.saveState(
       "material-duplicate",

@@ -83,8 +83,10 @@ function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
    hide();
 }
 
-function handleDuplicateMaterial() {
-   const duplicatedMaterial = projectStore.duplicateMaterial(props.material);
+async function handleDuplicateMaterial() {
+   const duplicatedMaterial = await projectStore.duplicateMaterial(
+      props.material
+   );
    if (!duplicatedMaterial) return;
    projectStore.saveState(
       "material-duplicate",
