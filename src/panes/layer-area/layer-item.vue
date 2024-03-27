@@ -164,9 +164,11 @@ function handleLayerNameInput() {
          "layer-name",
          () => {
             props.layer.name = oldName;
+            layerNameInputValue.value = oldName;
          },
          () => {
             props.layer.name = newName;
+            layerNameInputValue.value = newName;
          }
       );
    }

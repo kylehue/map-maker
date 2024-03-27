@@ -194,6 +194,10 @@ export const useProjectStore = defineStore("project", () => {
       layer.matrix.setSeparator(_matrixSeparator.value);
       _layers.unshift(layer);
 
+      if (_layers.length === 1) {
+         setSelectedLayer(layer);
+      }
+
       makeLayersMatrixSizeUniform();
       return layer;
    }
@@ -204,7 +208,7 @@ export const useProjectStore = defineStore("project", () => {
       const targetIndex = clamp(currentIndex + step, 0, _layers.length - 1);
       const isSelected = _selectedLayer.value?.id === layer.id;
 
-      deleteLayer(layer);
+      _layers.splice(currentIndex, 1);
       _layers.splice(targetIndex, 0, layer);
       if (isSelected) setSelectedLayer(layer);
    }
