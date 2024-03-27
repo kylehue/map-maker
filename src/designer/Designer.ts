@@ -34,6 +34,9 @@ export class Designer {
 
    constructor() {
       this.context.imageSmoothingEnabled = false;
+      this.canvas.tabIndex = 0;
+      this.canvas.style.outline = "none";
+      this.canvas.style.border = "none";
       this.repaint();
       this.initListeners();
    }
@@ -92,6 +95,8 @@ export class Designer {
       let lastTool: Tool | null = null;
       addEventListener("keydown", (e) => {
          if (e.code == "Space" && this.designerStore.activeTool != "hand") {
+            e.preventDefault();
+            this.canvas.focus();
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
          }
