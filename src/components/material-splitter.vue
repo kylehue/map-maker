@@ -95,11 +95,13 @@
                      </div>
                      <NDivider class="!m-0"></NDivider>
                      <div class="flex flex-col w-full">
-                        <NCheckbox
-                           v-model:checked="data.isCroppingInputEnabled"
-                        >
+                        <div class="flex items-center gap-2">
+                           <NCheckbox
+                              v-model:checked="data.isCroppingInputEnabled"
+                           >
+                           </NCheckbox>
                            Crop Input
-                        </NCheckbox>
+                        </div>
                         <div class="flex flex-col gap-1">
                            <NInputNumber
                               v-model:value="cropModel.x.value"
@@ -158,11 +160,13 @@
                      </div>
                      <NDivider class="!m-0"></NDivider>
                      <div class="flex flex-col w-full">
-                        <NCheckbox
-                           v-model:checked="data.isResizingOutputsEnabled"
-                        >
+                        <div class="flex items-center gap-2">
+                           <NCheckbox
+                              v-model:checked="data.isResizingOutputsEnabled"
+                           >
+                           </NCheckbox>
                            Resize Split Outputs
-                        </NCheckbox>
+                        </div>
                         <div class="flex flex-col gap-1">
                            <NInputNumber
                               v-model:value="data.resizeOutput.width"
