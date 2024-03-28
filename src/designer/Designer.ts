@@ -246,6 +246,7 @@ export class Designer {
                      x: tx,
                      y: ty,
                   } = this.getTransformedImageInfo(material);
+                  ctx.imageSmoothingEnabled = false;
                   ctx.drawImage(image, x + tx, y + ty);
                }
                if (this.settingsStore.designerArea.showMatrixId) {

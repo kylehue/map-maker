@@ -57,7 +57,6 @@ export class MaterialTexture {
       this.imageCanvas.width = rotatedWidth;
       this.imageCanvas.height = rotatedHeight;
 
-      this.ctx.imageSmoothingEnabled = false;
       this.ctx.save();
       this.ctx.translate(rotatedWidth / 2, rotatedHeight / 2);
       this.ctx.rotate(angle);
@@ -65,6 +64,7 @@ export class MaterialTexture {
          this.isHorizontallyFlipped ? -1 : 1,
          this.isVerticallyFlipped ? -1 : 1
       );
+      this.ctx.imageSmoothingEnabled = false;
       this.ctx.drawImage(
          this.origImageCanvas,
          -origWidth / 2,

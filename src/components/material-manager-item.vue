@@ -208,7 +208,9 @@ const isVerticallyFlipped = ref(
 );
 
 async function handleDuplicateMaterial() {
-   const duplicatedMaterial = await projectStore.duplicateMaterial(props.material);
+   const duplicatedMaterial = await projectStore.duplicateMaterial(
+      props.material
+   );
    if (!duplicatedMaterial) return;
    projectStore.saveState(
       "material-duplicate",
@@ -422,3 +424,9 @@ watch(isVerticallyFlipped, () => {
    handleMaterialChangeVerticallyFlipped();
 });
 </script>
+
+<style scoped lang="scss">
+img {
+   image-rendering: pixelated;
+}
+</style>

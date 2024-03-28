@@ -140,6 +140,7 @@ function handleRightClick(e: MouseEvent) {
 
    img {
       user-select: none !important;
+      image-rendering: pixelated;
    }
 }
 </style>
