@@ -11,7 +11,16 @@ export const useDesignerStore = defineStore("designer", () => {
    const _zoom = ref(1000);
    const _position = reactive(new Vector());
    const _isFullScreen = ref(false);
-   const _maxTiles = ref(50);
+   const _maxTiles = computed(() => {
+      const largestLayer = projectStore.layers
+         .filter((v) => v.isVisible)
+         .sort((a, b) => {
+            return b.matrix.getTotalSize() - a.matrix.getTotalSize();
+         })[0];
+
+      const size = largestLayer ? largestLayer.matrix.getTotalSize() + 25 : 50;
+      return Math.max(50, size);
+   });
    const _minTiles = ref(5);
    const _activeTool = ref<Tool>("move");
    const _designer = ref<Designer>();
@@ -48,14 +57,6 @@ export const useDesignerStore = defineStore("designer", () => {
       _position.y += y * zoomNormalizer;
    }
 
-   function setMaxTiles(n: number) {
-      _maxTiles.value = n;
-   }
-
-   function setMinTiles(n: number) {
-      _minTiles.value = n;
-   }
-
    function setActiveTool(s: Tool) {
       _activeTool.value = s;
    }
@@ -89,9 +90,7 @@ export const useDesignerStore = defineStore("designer", () => {
       addZoom,
       position,
       maxTiles,
-      setMaxTiles,
       minTiles,
-      setMinTiles,
       activeTool,
       setActiveTool,
       resetView,
