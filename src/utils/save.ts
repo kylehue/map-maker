@@ -341,7 +341,6 @@ export namespace ProjectSaver {
    addEventListener("beforeunload", (e) => {
       const projectStore = useProjectStore();
       if (projectStore.isEmpty) return;
-      save();
       reset();
       e.returnValue = "Changes you made may not be saved.";
       return "Changes you made may not be saved.";
