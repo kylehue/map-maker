@@ -8,6 +8,10 @@ export class MapMatrix {
    constructor() {}
 
    public setMinSize(minSize: number | null) {
+      if (typeof minSize == "number") {
+         minSize = minSize % 2 !== 0 ? minSize + 1 : minSize;
+      }
+      
       this.minSize = minSize;
       this.updateMinSize();
    }
@@ -16,9 +20,9 @@ export class MapMatrix {
       if (typeof this.minSize == "number" && this.minSize >= 0) {
          this.trim();
          if (this.matrix.length < this.minSize) {
-            const half = Math.floor(this.minSize / 2);
-            this.translate(-half, -half);
-            this.translate(half, half);
+            const offset = Math.floor((this.minSize - this.matrix.length) / 2);
+            this.translate(-offset, -offset);
+            this.translate(offset, offset);
          }
       }
    }
