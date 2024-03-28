@@ -112,13 +112,14 @@ export class Designer {
       addEventListener("mousemove", (e) => {
          if (this.designerStore.activeTool == "hand" && this.isMouseDown) {
             this.designerStore.move(-e.movementX, -e.movementY);
+            this.repaint();
+         } else {
+            this.maybeRepaint();
          }
 
          if (this.isMouseDown) {
             this.initTooling();
          }
-
-         this.maybeRepaint();
       });
    }
 
