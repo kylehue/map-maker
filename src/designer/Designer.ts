@@ -57,6 +57,7 @@ export class Designer {
 
       addEventListener("resize", () => {
          this.canvasBounds = this.canvas.getBoundingClientRect();
+         this.repaint();
       });
 
       addEventListener("mouseup", () => {
@@ -112,9 +113,30 @@ export class Designer {
          if (this.designerStore.activeTool == "hand" && this.isMouseDown) {
             this.designerStore.move(-e.movementX, -e.movementY);
          }
-         this.initTooling();
-         this.repaint();
+
+         if (this.isMouseDown) {
+            this.initTooling();
+         }
+
+         this.maybeRepaint();
       });
+   }
+
+   private lastColSinceRepaint?: number = undefined;
+   private lastRowSinceRepaint?: number = undefined;
+   public maybeRepaint() {
+      let [col, row] = this.getMouseColumnRow();
+
+      if (
+         col === this.lastColSinceRepaint &&
+         row === this.lastRowSinceRepaint
+      ) {
+         return;
+      }
+
+      this.repaint();
+      this.lastColSinceRepaint = col;
+      this.lastRowSinceRepaint = row;
    }
 
    public initTooling() {
@@ -127,16 +149,19 @@ export class Designer {
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.add(row, col, material.getMatrixId());
+         this.projectStore.makeLayersMatrixSizeUniform();
+         this.repaint();
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
          layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
+         this.projectStore.makeLayersMatrixSizeUniform();
+         this.repaint();
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
          layer.matrix.fill(row, col, material.getMatrixId());
+         this.projectStore.makeLayersMatrixSizeUniform();
+         this.repaint();
       }
-
-      this.projectStore.makeLayersMatrixSizeUniform();
-      this.repaint();
    }
 
    public setSize(width: number, height: number) {
