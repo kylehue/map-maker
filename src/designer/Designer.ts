@@ -275,16 +275,16 @@ export class Designer {
 
       switch (material.getPositionOrigin()) {
          case "top":
-            y += height / 2 - tileSize / 2;
+            y += height / 2;
             break;
          case "bottom":
-            y -= height / 2 - tileSize / 2;
+            y -= height / 2;
             break;
          case "right":
-            x -= width / 2 - tileSize / 2;
+            x -= width / 2;
             break;
          case "left":
-            x += width / 2 - tileSize / 2;
+            x += width / 2;
             break;
       }
 
