@@ -40,10 +40,28 @@ watch(matrixStr, (matrixStr) => {
 });
 
 function save() {
-   if (!projectStore.selectedLayer) return "";
-   projectStore.selectedLayer.matrix.fromString(value.value);
-   value.value = projectStore.selectedLayer.matrix.toString();
+   const layer = projectStore.selectedLayer;
+   if (!layer) return "";
+   const oldMatrix = matrixStr.value;
+   const newMatrix = value.value;
+
+   layer.matrix.fromString(newMatrix);
+   value.value = layer.matrix.toString();
    projectStore.makeLayersMatrixSizeUniform();
+
+   projectStore.saveState(
+      "layer-edit-matrix",
+      () => {
+         layer.matrix.fromString(oldMatrix);
+         value.value = layer.matrix.toString();
+         projectStore.makeLayersMatrixSizeUniform();
+      },
+      () => {
+         layer.matrix.fromString(newMatrix);
+         value.value = layer.matrix.toString();
+         projectStore.makeLayersMatrixSizeUniform();
+      }
+   );
 }
 </script>
 
