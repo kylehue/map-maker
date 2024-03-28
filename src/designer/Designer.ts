@@ -189,32 +189,40 @@ export class Designer {
 
    private drawTiles(ctx: CanvasRenderingContext2D, layer: Layer) {
       const tileSize = this.projectStore.tileSize || 1;
-
+      const matrix = layer.matrix.getMatrix();
       const totalSize = layer.matrix.getTotalSize(tileSize);
 
       const renderTileViewportOffset = 4;
-      const rowStart =
+      let rowStart =
          Math.ceil((this.camera.viewport.top + totalSize / 2) / tileSize) +
          1 -
          renderTileViewportOffset;
-      const rowEnd =
+      let rowEnd =
          Math.floor((this.camera.viewport.bottom + totalSize / 2) / tileSize) +
          renderTileViewportOffset;
-      const colStart =
+      let colStart =
          Math.ceil((this.camera.viewport.left + totalSize / 2) / tileSize) +
          1 -
          renderTileViewportOffset;
-      const colEnd =
+      let colEnd =
          Math.floor((this.camera.viewport.right + totalSize / 2) / tileSize) +
          renderTileViewportOffset;
+
+      // For exporting purposes, render everything when repainting outside ctx
+      if (ctx !== this.context) {
+         rowStart = 0;
+         rowEnd = totalSize;
+         colStart = 0;
+         colEnd = totalSize;
+      }
 
       // draw tiles
       for (
          let rowIndex = Math.max(0, rowStart);
-         rowIndex < Math.min(layer.matrix.getMatrix().length, rowEnd);
+         rowIndex < Math.min(matrix.length, rowEnd);
          rowIndex++
       ) {
-         const row = layer.matrix.getMatrix()[rowIndex];
+         const row = matrix[rowIndex];
          if (!row) continue;
          for (
             let colIndex = Math.max(0, colStart);
