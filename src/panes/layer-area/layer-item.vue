@@ -16,7 +16,7 @@
             size="tiny"
             quaternary
             circle
-            @click="() => (layer.isVisible = !layer.isVisible)"
+            @click="() => handleLayerToggleVisibility()"
          >
             <NIcon>
                <PhEyeSlash v-if="!layer.isVisible" />
@@ -62,9 +62,11 @@ import { useContextMenu } from "../../composables/use-context-menu";
 import { useProjectStore } from "../../store/project";
 import type { Layer } from "../../types";
 import { clamp } from "../../utils/clamp";
+import { useDesignerStore } from "../../store/designer";
 
 const theme = useThemeVars();
 const projectStore = useProjectStore();
+const designerStore = useDesignerStore();
 const props = defineProps<{
    layer: Layer;
 }>();
@@ -180,13 +182,16 @@ function handleLayerToggleVisibility() {
    const oldIsVisible = props.layer.isVisible;
    const newIsVisible = !props.layer.isVisible;
    props.layer.isVisible = newIsVisible;
+   designerStore.designer?.repaint();
    projectStore.saveState(
       "layer-visible",
       () => {
          props.layer.isVisible = oldIsVisible;
+         designerStore.designer?.repaint();
       },
       () => {
          props.layer.isVisible = newIsVisible;
+         designerStore.designer?.repaint();
       }
    );
 }

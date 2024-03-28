@@ -14,8 +14,10 @@ import {
 import { focusedMaterial } from "../composables/use-material-manager";
 import { cantor } from "../utils/cantor";
 import { Material } from "../utils/Material";
+import { useDesignerStore } from "./designer";
 
 export const useProjectStore = defineStore("project", () => {
+   const designerStore = useDesignerStore();
    const _filename = ref("untitled project");
    const _layers: Layer[] = reactive([]);
    const _materials: Material[] = reactive([]);
@@ -114,10 +116,12 @@ export const useProjectStore = defineStore("project", () => {
 
    function undoState() {
       timeTravel(-1);
+      designerStore.designer?.repaint();
    }
 
    function redoState() {
       timeTravel(1);
+      designerStore.designer?.repaint();
    }
 
    function peekUndo() {
@@ -173,6 +177,7 @@ export const useProjectStore = defineStore("project", () => {
       }
 
       makeLayersMatrixSizeUniform();
+      designerStore.designer?.repaint();
    }
 
    function restoreLayer(layer: Layer) {
@@ -180,6 +185,7 @@ export const useProjectStore = defineStore("project", () => {
       _layers.unshift(layer);
 
       makeLayersMatrixSizeUniform();
+      designerStore.designer?.repaint();
    }
 
    function createLayer(name = "New layer") {
@@ -211,6 +217,7 @@ export const useProjectStore = defineStore("project", () => {
       _layers.splice(currentIndex, 1);
       _layers.splice(targetIndex, 0, layer);
       if (isSelected) setSelectedLayer(layer);
+      designerStore.designer?.repaint();
    }
 
    function getMaterialByMatrixId(matrixId: string) {
@@ -240,6 +247,7 @@ export const useProjectStore = defineStore("project", () => {
       if (_materials.find((v) => v.getId() === material.getId())) return;
       _materials.unshift(material);
       material.restore();
+      designerStore.designer?.repaint();
    }
 
    async function duplicateMaterial(material: Material) {
@@ -273,6 +281,7 @@ export const useProjectStore = defineStore("project", () => {
 
          material.dispose();
          _materials.splice(i, 1);
+         designerStore.designer?.repaint();
 
          break;
       }
@@ -316,6 +325,7 @@ export const useProjectStore = defineStore("project", () => {
       for (const layer of _layers) {
          layer.matrix.setSeparator(sep);
       }
+      designerStore.designer?.repaint();
    }
 
    function setEmptyMatrixId(id: string) {
@@ -323,6 +333,7 @@ export const useProjectStore = defineStore("project", () => {
       for (const layer of _layers) {
          layer.matrix.setEmptyMatrixId(id);
       }
+      designerStore.designer?.repaint();
    }
 
    function reset() {
