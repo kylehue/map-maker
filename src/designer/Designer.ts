@@ -97,7 +97,6 @@ export class Designer {
       addEventListener("keydown", (e) => {
          if (e.code == "Space" && this.designerStore.activeTool != "hand") {
             e.preventDefault();
-            this.canvas.focus();
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
          }
