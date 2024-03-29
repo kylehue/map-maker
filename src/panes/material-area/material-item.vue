@@ -35,13 +35,11 @@ import { useProjectStore } from "../../store/project";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useContextMenu } from "../../composables/use-context-menu";
 import { Material } from "../../utils/Material";
-import { useDesignerStore } from "../../store/designer";
 
 const props = defineProps<{
    material: Material;
 }>();
 
-const designerStore = useDesignerStore();
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
@@ -71,7 +69,6 @@ const contextMenuOptions: DropdownOption[] = [
 
 function handleSelectMaterial() {
    projectStore.setSelectedMaterial(props.material);
-   designerStore.designer?.canvas.focus();
 }
 
 function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {

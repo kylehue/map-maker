@@ -93,9 +93,17 @@ export class Designer {
          this.repaint();
       });
 
+      this.canvas.addEventListener("mouseenter", () => {
+         this.canvas.focus();
+      });
+
       let lastTool: Tool | null = null;
       addEventListener("keydown", (e) => {
-         if (e.code == "Space" && this.designerStore.activeTool != "hand") {
+         if (
+            e.code == "Space" &&
+            this.designerStore.activeTool != "hand" &&
+            document.activeElement === this.canvas
+         ) {
             e.preventDefault();
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
