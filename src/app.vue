@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
 import { Splitpanes, Pane } from "splitpanes";
-import { useThemeVars, NTabs, NTabPane } from "naive-ui";
+import { useThemeVars, NTabs, NTabPane, useMessage } from "naive-ui";
 import Navbar from "./panes/navbar.vue";
 import DesignArea from "./panes/design-area/index.vue";
 import MaterialArea from "./panes/material-area/index.vue";
@@ -97,6 +97,7 @@ import { ProjectSaver } from "./utils/save";
 const projectStore = useProjectStore();
 const settingsStore = useSettingsStore();
 const designerStore = useDesignerStore();
+const message = useMessage();
 const theme = useThemeVars();
 
 projectStore.setupNewProject();
@@ -115,7 +116,9 @@ addEventListener("keydown", (event) => {
          projectStore.redoState();
       } else if (event.code == "KeyS") {
          event.preventDefault();
-         ProjectSaver.save(true);
+         ProjectSaver.save(true).then(() => {
+            message.success("Project has been saved.");
+         });
       } else if (event.code == "KeyO") {
          event.preventDefault();
          ProjectSaver.open();
