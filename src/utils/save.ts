@@ -252,9 +252,12 @@ export namespace ProjectSaver {
             // Load project from json
             const file = await handler.getFile();
             const fileContent = await file.text();
-            loadFromJSON(deserialize(fileContent), {
+            await loadFromJSON(deserialize(fileContent), {
                filename: file.name,
             });
+
+            // Save current
+            await save();
          } catch (e) {
             console.warn(e);
          }
@@ -339,9 +342,14 @@ export namespace ProjectSaver {
    }
 
    addEventListener("beforeunload", (e) => {
+      // immediately close writer
+      if (cachedWritable.value) {
+         cachedWritable.value.close();
+      }
+
       const projectStore = useProjectStore();
       if (projectStore.isEmpty) return;
-      reset();
+
       e.returnValue = "Changes you made may not be saved.";
       return "Changes you made may not be saved.";
    });

@@ -25,7 +25,7 @@ export const useSettingsStore = defineStore("settings", () => {
    });
 
    const isAutosaveEnabled = ref(false);
-   const autosaveIntervalInMinutes = ref(2);
+   const autosaveIntervalInMinutes = ref(0.5);
    const window = computed(() => _window);
    const keybinds = computed(() => _keybinds);
    const materialArea = computed(() => _materialArea);

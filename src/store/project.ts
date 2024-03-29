@@ -15,9 +15,11 @@ import { focusedMaterial } from "../composables/use-material-manager";
 import { cantor } from "../utils/cantor";
 import { Material } from "../utils/Material";
 import { useDesignerStore } from "./designer";
+import { useSettingsStore } from "./settings";
 
 export const useProjectStore = defineStore("project", () => {
    const designerStore = useDesignerStore();
+   const settingsStore = useSettingsStore();
    const _filename = ref("untitled project");
    const _layers: Layer[] = reactive([]);
    const _materials: Material[] = reactive([]);
@@ -161,6 +163,10 @@ export const useProjectStore = defineStore("project", () => {
          copy.id = generateId();
          copy.name += " copy";
          _layers.splice(i + 1, 0, copy);
+
+         if (settingsStore.isAutosaveEnabled) {
+            ProjectSaver.save();
+         }
          return copy;
       }
    }
@@ -179,6 +185,10 @@ export const useProjectStore = defineStore("project", () => {
 
       makeLayersMatrixSizeUniform();
       designerStore.designer?.repaint();
+
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
    }
 
    function restoreLayer(layer: Layer) {
@@ -187,6 +197,10 @@ export const useProjectStore = defineStore("project", () => {
 
       makeLayersMatrixSizeUniform();
       designerStore.designer?.repaint();
+
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
    }
 
    function createLayer(name = "New layer") {
@@ -206,6 +220,11 @@ export const useProjectStore = defineStore("project", () => {
       }
 
       makeLayersMatrixSizeUniform();
+
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
+
       return layer;
    }
 
@@ -219,6 +238,10 @@ export const useProjectStore = defineStore("project", () => {
       _layers.splice(targetIndex, 0, layer);
       if (isSelected) setSelectedLayer(layer);
       designerStore.designer?.repaint();
+
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
    }
 
    function getMaterialByMatrixId(matrixId: string) {
@@ -241,6 +264,10 @@ export const useProjectStore = defineStore("project", () => {
          material.setSplitData(options.splitData);
       }
 
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
+
       return material;
    }
 
@@ -249,6 +276,10 @@ export const useProjectStore = defineStore("project", () => {
       _materials.unshift(material);
       material.restore();
       designerStore.designer?.repaint();
+
+      if (settingsStore.isAutosaveEnabled) {
+         ProjectSaver.save();
+      }
    }
 
    async function duplicateMaterial(material: Material) {
@@ -259,6 +290,10 @@ export const useProjectStore = defineStore("project", () => {
             .getTexture()
             .init(material.getTexture().getOrigImageCanvasUrl());
          _materials.splice(i + 1, 0, clone);
+
+         if (settingsStore.isAutosaveEnabled) {
+            ProjectSaver.save();
+         }
          return clone;
       }
    }
@@ -283,6 +318,10 @@ export const useProjectStore = defineStore("project", () => {
          material.dispose();
          _materials.splice(i, 1);
          designerStore.designer?.repaint();
+
+         if (settingsStore.isAutosaveEnabled) {
+            ProjectSaver.save();
+         }
 
          break;
       }
