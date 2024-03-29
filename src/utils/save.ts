@@ -16,6 +16,7 @@ export namespace ProjectSaver {
             isVisible: boolean;
             isLocked: boolean;
             matrixString: string;
+            index: number;
          }[];
          materials: {
             name: string;
@@ -84,7 +85,7 @@ export namespace ProjectSaver {
 
       // add layers
       for (const rawLayer of json.project.layers) {
-         const layer = projectStore.createLayer(rawLayer.name);
+         const layer = projectStore.createLayer(rawLayer.name, rawLayer.index);
          layer.isLocked = rawLayer.isLocked;
          layer.isVisible = rawLayer.isVisible;
          layer.matrix.fromString(rawLayer.matrixString);
@@ -150,14 +151,13 @@ export namespace ProjectSaver {
 
       return {
          project: {
-            layers: projectStore.layers.map((v) => {
-               return {
-                  name: v.name,
-                  isLocked: v.isLocked,
-                  isVisible: v.isVisible,
-                  matrixString: v.matrix.toString(),
-               };
-            }),
+            layers: projectStore.layers.map((layer, index) => ({
+               name: layer.name,
+               isLocked: layer.isLocked,
+               isVisible: layer.isVisible,
+               matrixString: layer.matrix.toString(),
+               index,
+            })),
             materials: projectStore.materials.map((v) => {
                return {
                   name: v.getName(),

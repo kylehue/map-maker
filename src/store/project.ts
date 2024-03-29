@@ -203,7 +203,7 @@ export const useProjectStore = defineStore("project", () => {
       }
    }
 
-   function createLayer(name = "New layer") {
+   function createLayer(name = "New layer", targetIndex?: number) {
       const layer: Layer = {
          id: generateId(),
          name,
@@ -213,7 +213,11 @@ export const useProjectStore = defineStore("project", () => {
       };
       layer.matrix.setEmptyMatrixId(_emptyMatrixId.value);
       layer.matrix.setSeparator(_matrixSeparator.value);
-      _layers.unshift(layer);
+      if (typeof targetIndex == "number") {
+         _layers.splice(targetIndex, 0, layer);
+      } else {
+         _layers.unshift(layer);
+      }
 
       if (_layers.length === 1) {
          setSelectedLayer(layer);
