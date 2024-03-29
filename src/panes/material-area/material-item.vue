@@ -4,7 +4,7 @@
          <div
             class="material relative flex flex-shrink-0 items-center justify-center p-2 rounded w-24 h-24"
             :tabindex="0"
-            @click="() => projectStore.setSelectedMaterial(material)"
+            @click="handleSelectMaterial"
             @click.right="handleRightClick"
             :class="{
                selected: material === projectStore.selectedMaterial,
@@ -35,11 +35,13 @@ import { useProjectStore } from "../../store/project";
 import { useMaterialManager } from "../../composables/use-material-manager";
 import { useContextMenu } from "../../composables/use-context-menu";
 import { Material } from "../../utils/Material";
+import { useDesignerStore } from "../../store/designer";
 
 const props = defineProps<{
    material: Material;
 }>();
 
+const designerStore = useDesignerStore();
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
 const theme = useThemeVars();
@@ -66,6 +68,11 @@ const contextMenuOptions: DropdownOption[] = [
       key: MaterialContextMenu.DELETE,
    },
 ];
+
+function handleSelectMaterial() {
+   projectStore.setSelectedMaterial(props.material);
+   designerStore.designer?.canvas.focus();
+}
 
 function handleContextMenuSelect(e: MaterialContextMenu, hide: Function) {
    switch (e) {
