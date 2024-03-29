@@ -45,7 +45,7 @@ export const useProjectStore = defineStore("project", () => {
       searchOptions: {
          fuzzy: true,
          boost: {
-            name: 2,
+            name: 5,
          },
          prefix: true,
       },
