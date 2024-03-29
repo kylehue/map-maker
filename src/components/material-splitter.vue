@@ -507,10 +507,14 @@ async function handleSplit() {
             );
 
          if (!loadedMaterials.length) {
+            const name =
+               material.getName() +
+               `${splittedMaterial.row}${splittedMaterial.column}`;
             const materialChunk = await projectStore.createMaterial(
-               material.getName() + "_" + i,
+               name,
                splittedMaterial.blob
             );
+            materialChunk.setMatrixId(name);
             newMaterials.push(materialChunk);
 
             if (settingsName) {

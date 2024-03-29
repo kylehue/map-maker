@@ -105,7 +105,7 @@ projectStore.setupNewProject();
 addEventListener("keydown", (event) => {
    if (event.ctrlKey) {
       if (event.code == "KeyZ") {
-         if (document.activeElement.tagName === "INPUT") return;
+         if (document.activeElement?.tagName === "INPUT") return;
          event.preventDefault();
          if (event.shiftKey) {
             projectStore.redoState();
@@ -113,7 +113,7 @@ addEventListener("keydown", (event) => {
             projectStore.undoState();
          }
       } else if (event.code == "KeyY") {
-         if (document.activeElement.tagName === "INPUT") return;
+         if (document.activeElement?.tagName === "INPUT") return;
          event.preventDefault();
          projectStore.redoState();
       } else if (event.code == "KeyS") {
