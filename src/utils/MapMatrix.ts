@@ -4,6 +4,10 @@ export class MapMatrix {
    private separator = " ";
    private minSize: number | null = null;
    private nonEmptyTotalSize = 0;
+   private minRecordedRow = 0;
+   private maxRecordedRow = 0;
+   private minRecordedCol = 0;
+   private maxRecordedCol = 0;
 
    constructor() {}
 
@@ -11,7 +15,7 @@ export class MapMatrix {
       if (typeof minSize == "number") {
          minSize = minSize % 2 !== 0 ? minSize + 1 : minSize;
       }
-      
+
       this.minSize = minSize;
       this.updateMinSize();
    }
@@ -124,6 +128,7 @@ export class MapMatrix {
    }
 
    trim() {
+      const oldSize = this.matrix.length;
       const firstRowIsEmpty = () =>
          this.matrix[0]?.every((v) => v === this.emptyMatrixId);
       const lastRowIsEmpty = () =>
@@ -149,7 +154,9 @@ export class MapMatrix {
          });
       }
 
-      this._updateNonEmptyTotalSize();
+      if (oldSize !== this.matrix.length) {
+         this._updateNonEmptyTotalSize();
+      }
    }
 
    private getBounds() {
@@ -164,6 +171,13 @@ export class MapMatrix {
          left,
          right,
       };
+   }
+
+   private _recordRowAndColumn(row: number, col: number) {
+      this.minRecordedRow = Math.min(row, this.minRecordedRow);
+      this.maxRecordedRow = Math.max(row, this.maxRecordedRow);
+      this.minRecordedCol = Math.min(col, this.minRecordedCol);
+      this.maxRecordedCol = Math.max(col, this.maxRecordedCol);
    }
 
    fill(row: number, col: number, matrixId: string) {
@@ -224,7 +238,16 @@ export class MapMatrix {
          this.matrix[centerRow + row - o1][centerCol + col - o2]
       );
 
-      this._updateNonEmptyTotalSize();
+      const isBoundsExpanded =
+         row < this.minRecordedRow ||
+         row > this.maxRecordedRow ||
+         col < this.minRecordedCol ||
+         col > this.maxRecordedCol;
+      if (isBoundsExpanded) {
+         this._updateNonEmptyTotalSize();
+      }
+
+      this._recordRowAndColumn(row, col);
    }
 
    private _add(row: number, col: number, matrixId: string) {
@@ -258,6 +281,17 @@ export class MapMatrix {
       const o2 = col <= 0 ? 0 : 1;
       this.matrix[centerRow + row - o1] ??= [];
       this.matrix[centerRow + row - o1][centerCol + col - o2] = matrixId;
+
+      const isBoundsExpanded =
+         row < this.minRecordedRow ||
+         row > this.maxRecordedRow ||
+         col < this.minRecordedCol ||
+         col > this.maxRecordedCol;
+      if (isBoundsExpanded) {
+         this._updateNonEmptyTotalSize();
+      }
+
+      this._recordRowAndColumn(row, col);
    }
 
    add(row: number, col: number, matrixId: string) {
@@ -268,6 +302,9 @@ export class MapMatrix {
    private translate(rowStep: number, colStep: number) {
       const rowStepAbs = Math.abs(rowStep);
       const colStepAbs = Math.abs(colStep);
+
+      if (rowStepAbs === 0 && colStepAbs === 0) return;
+
       const translated: string[][] = [];
 
       for (let i = 0; i < this.matrix.length + rowStepAbs; i++) {
