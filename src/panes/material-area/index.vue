@@ -72,7 +72,8 @@ const containerRef = ref<HTMLDivElement>();
 const isDragAndDropping = ref(false);
 const searchMaterialText = ref("");
 const materialsComputed = computed(() =>
-   projectStore.searchMaterial(searchMaterialText.value)
+   projectStore
+      .searchMaterial(searchMaterialText.value)
       .sort((a, b) => a.getName().localeCompare(b.getName()))
 );
 
@@ -152,6 +153,10 @@ addEventListener("dragend", () => {
 });
 
 addEventListener("drop", () => {
+   isDragAndDropping.value = false;
+});
+
+addEventListener("mouseup", () => {
    isDragAndDropping.value = false;
 });
 </script>
