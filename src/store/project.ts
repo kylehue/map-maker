@@ -259,6 +259,7 @@ export const useProjectStore = defineStore("project", () => {
       const material = new Material();
       await material.getTexture().init(textureBase);
       material.setName(name);
+      material.setMatrixId(name);
       _materials.unshift(material);
       if (options.splitData) {
          material.setSplitData(options.splitData);
@@ -289,6 +290,7 @@ export const useProjectStore = defineStore("project", () => {
          await clone
             .getTexture()
             .init(material.getTexture().getOrigImageCanvasUrl());
+         clone.setMatrixId(clone.getName());
          _materials.splice(i + 1, 0, clone);
 
          if (settingsStore.isAutosaveEnabled) {
