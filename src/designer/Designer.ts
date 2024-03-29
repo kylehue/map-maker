@@ -125,7 +125,7 @@ export class Designer {
          }
 
          if (this.isMouseDown) {
-            this.initTooling();
+            this.maybeInitTooling();
          }
       });
    }
@@ -145,6 +145,23 @@ export class Designer {
       this.repaint();
       this.lastColSinceRepaint = col;
       this.lastRowSinceRepaint = row;
+   }
+
+   private lastColSinceInitTooling?: number = undefined;
+   private lastRowSinceInitTooling?: number = undefined;
+   public maybeInitTooling() {
+      let [col, row] = this.getMouseColumnRow();
+
+      if (
+         col === this.lastColSinceInitTooling &&
+         row === this.lastRowSinceInitTooling
+      ) {
+         return;
+      }
+
+      this.initTooling();
+      this.lastColSinceInitTooling = col;
+      this.lastRowSinceInitTooling = row;
    }
 
    public initTooling() {

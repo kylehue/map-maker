@@ -12,6 +12,7 @@ export class MapMatrix {
    constructor() {}
 
    public setMinSize(minSize: number | null) {
+      if (minSize === this.minSize) return;
       if (typeof minSize == "number") {
          minSize = minSize % 2 !== 0 ? minSize + 1 : minSize;
       }
@@ -25,8 +26,9 @@ export class MapMatrix {
          this.trim();
          if (this.matrix.length < this.minSize) {
             const offset = Math.floor((this.minSize - this.matrix.length) / 2);
-            this.translate(-offset, -offset);
-            this.translate(offset, offset);
+            if (offset !== 0) {
+               this.expand(offset);
+            }
          }
       }
    }
@@ -181,19 +183,13 @@ export class MapMatrix {
    }
 
    fill(row: number, col: number, matrixId: string) {
-      // Expand matrix if the row/col exceeds the matrix bounds
-      const oldBounds = this.getBounds();
-      if (
-         col < oldBounds.left ||
-         col >= oldBounds.right ||
-         row < oldBounds.top ||
-         row >= oldBounds.bottom
-      ) {
-         this._add(row, col, this.emptyMatrixId);
-      }
+      const fixedRow = row >= 0 ? row + 1 : row;
+      const fixedCol = col >= 0 ? col + 1 : col;
 
-      row = row >= 0 ? row + 1 : row;
-      col = col >= 0 ? col + 1 : col;
+      // Expand matrix if the row/col exceeds the matrix bounds
+      const overlap = this.getOverlap(row, col);
+      this.expand(overlap);
+
       const fill = (
          row: number,
          col: number,
@@ -232,71 +228,101 @@ export class MapMatrix {
       const o1 = row <= 0 ? 0 : 1; // offset
       const o2 = col <= 0 ? 0 : 1;
       fill(
-         centerRow + row - o1,
-         centerCol + col - o2,
+         centerRow + fixedRow - o1,
+         centerCol + fixedCol - o2,
          matrixId,
-         this.matrix[centerRow + row - o1][centerCol + col - o2]
+         this.matrix[centerRow + fixedRow - o1][centerCol + fixedCol - o2]
       );
 
       const isBoundsExpanded =
-         row < this.minRecordedRow ||
-         row > this.maxRecordedRow ||
-         col < this.minRecordedCol ||
-         col > this.maxRecordedCol;
+         fixedRow < this.minRecordedRow ||
+         fixedRow > this.maxRecordedRow ||
+         fixedCol < this.minRecordedCol ||
+         fixedCol > this.maxRecordedCol;
       if (isBoundsExpanded) {
          this._updateNonEmptyTotalSize();
       }
 
-      this._recordRowAndColumn(row, col);
+      this._recordRowAndColumn(fixedRow, fixedCol);
    }
 
-   private _add(row: number, col: number, matrixId: string) {
-      row = row >= 0 ? row + 1 : row;
-      col = col >= 0 ? col + 1 : col;
+   private getOverlap(row: number, col: number) {
+      const fixedRow = row >= 0 ? row + 1 : row;
+      const fixedCol = col >= 0 ? col + 1 : col;
       const { top, bottom, left, right } = this.getBounds();
 
-      // Keep matrix perfectly square
       let overlapX = 0;
       let overlapY = 0;
-      if (col <= left || col >= right) {
+      if (fixedCol <= left || fixedCol >= right) {
          overlapX = Math.max(
-            Math.abs(col) - Math.abs(left),
-            Math.abs(col) - Math.abs(right)
+            Math.abs(fixedCol) - Math.abs(left),
+            Math.abs(fixedCol) - Math.abs(right)
          );
       }
-      if (row <= top || row >= bottom) {
+      if (fixedRow <= top || fixedRow >= bottom) {
          overlapY = Math.max(
-            Math.abs(row) - Math.abs(top),
-            Math.abs(row) - Math.abs(bottom)
+            Math.abs(fixedRow) - Math.abs(top),
+            Math.abs(fixedRow) - Math.abs(bottom)
          );
       }
-      const overlap = Math.max(overlapX, overlapY);
-      this.translate(overlap, overlap);
-      this.translate(-overlap, -overlap);
+
+      return Math.max(overlapX, overlapY);
+   }
+
+   add(row: number, col: number, matrixId: string, trimIfNeeded = true) {
+      const fixedRow = row >= 0 ? row + 1 : row;
+      const fixedCol = col >= 0 ? col + 1 : col;
+
+      // Keep matrix perfectly square
+      const overlap = this.getOverlap(row, col);
+      this.expand(overlap);
 
       // Put the matrix id by using the center as the origin
       const centerRow = Math.ceil(this.matrix.length / 2);
       const centerCol = Math.ceil((this.matrix[0]?.length || 0) / 2);
-      const o1 = row <= 0 ? 0 : 1; // offset
-      const o2 = col <= 0 ? 0 : 1;
-      this.matrix[centerRow + row - o1] ??= [];
-      this.matrix[centerRow + row - o1][centerCol + col - o2] = matrixId;
+      const o1 = fixedRow <= 0 ? 0 : 1; // offset
+      const o2 = fixedCol <= 0 ? 0 : 1;
+      this.matrix[centerRow + fixedRow - o1] ??= [];
+      this.matrix[centerRow + fixedRow - o1][centerCol + fixedCol - o2] =
+         matrixId;
 
       const isBoundsExpanded =
-         row < this.minRecordedRow ||
-         row > this.maxRecordedRow ||
-         col < this.minRecordedCol ||
-         col > this.maxRecordedCol;
+         fixedRow < this.minRecordedRow ||
+         fixedRow > this.maxRecordedRow ||
+         fixedCol < this.minRecordedCol ||
+         fixedCol > this.maxRecordedCol;
       if (isBoundsExpanded) {
          this._updateNonEmptyTotalSize();
       }
 
-      this._recordRowAndColumn(row, col);
+      if (matrixId === this.emptyMatrixId && trimIfNeeded) {
+         this.trim();
+      }
+
+      this._recordRowAndColumn(fixedRow, fixedCol);
    }
 
-   add(row: number, col: number, matrixId: string) {
-      this._add(row, col, matrixId);
-      this.trim();
+   private expand(size: number) {
+      if (!size) return;
+
+      // expand cols
+      this.matrix.forEach((v) => {
+         for (let i = 0; i < size; i++) {
+            v.unshift(this.emptyMatrixId);
+            v.push(this.emptyMatrixId);
+         }
+      });
+
+      // expand rows
+      const targetLength = this.matrix.length + size;
+      for (let i = 0; i < size; i++) {
+         this.matrix.unshift(
+            Array.from({ length: targetLength }).map(() => this.emptyMatrixId)
+         );
+         this.matrix.push(
+            Array.from({ length: targetLength }).map(() => this.emptyMatrixId)
+         );
+      }
    }
 
    private translate(rowStep: number, colStep: number) {
