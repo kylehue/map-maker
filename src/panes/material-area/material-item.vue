@@ -6,6 +6,7 @@
             :tabindex="0"
             @click="handleSelectMaterial"
             @click.right="handleRightClick"
+            @dragstart="e => e.preventDefault()"
             :class="{
                selected: material === projectStore.selectedMaterial,
             }"
