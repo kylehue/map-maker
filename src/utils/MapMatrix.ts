@@ -18,16 +18,16 @@ export class MapMatrix {
       }
 
       this.minSize = minSize;
-      this.updateMinSize();
+      this._updateMinSize();
    }
 
-   private updateMinSize() {
+   private _updateMinSize() {
       if (typeof this.minSize == "number" && this.minSize >= 0) {
          this.trim();
          if (this.matrix.length < this.minSize) {
             const offset = Math.floor((this.minSize - this.matrix.length) / 2);
             if (offset !== 0) {
-               this.expand(offset);
+               this._expand(offset);
             }
          }
       }
@@ -125,6 +125,19 @@ export class MapMatrix {
       this.nonEmptyTotalSize = Math.max(...maxes) * 2;
    }
 
+   private _maybeUpdateNonEmptyTotalSize(row: number, col: number) {
+      const isBoundsExpanded =
+         row < this.minRecordedRow ||
+         row > this.maxRecordedRow ||
+         col < this.minRecordedCol ||
+         col > this.maxRecordedCol;
+      if (isBoundsExpanded) {
+         this._updateNonEmptyTotalSize();
+      }
+
+      this._recordRowAndColumn(row, col);
+   }
+
    getMatrix() {
       return this.matrix;
    }
@@ -161,7 +174,7 @@ export class MapMatrix {
       }
    }
 
-   private getBounds() {
+   private _getBounds() {
       const top = -Math.ceil(this.matrix.length / 2);
       const bottom = Math.ceil(this.matrix.length / 2);
       const left = -Math.ceil((this.matrix[0]?.length || 0) / 2);
@@ -182,14 +195,19 @@ export class MapMatrix {
       this.maxRecordedCol = Math.max(col, this.maxRecordedCol);
    }
 
+   private _getRealRowAndColumn(row: number, col: number) {
+      const center = this.matrix.length / 2;
+      return [row + center, col + center];
+   }
+
    fill(row: number, col: number, matrixId: string) {
-      const fixedRow = row >= 0 ? row + 1 : row;
-      const fixedCol = col >= 0 ? col + 1 : col;
+      // Expand if needed
+      const overlap = this._getOverlap(row, col);
+      if (overlap > 0) {
+         this._expand(overlap);
+      }
 
-      // Expand matrix if the row/col exceeds the matrix bounds
-      const overlap = this.getOverlap(row, col);
-      this.expand(overlap);
-
+      const [_row, _col] = this._getRealRowAndColumn(row, col);
       const fill = (
          row: number,
          col: number,
@@ -223,33 +241,32 @@ export class MapMatrix {
          fill(row, col - 1, matrixId, targetMatrixId);
       };
 
-      const centerRow = Math.ceil(this.matrix.length / 2);
-      const centerCol = Math.ceil((this.matrix[0]?.length || 0) / 2);
-      const o1 = row <= 0 ? 0 : 1; // offset
-      const o2 = col <= 0 ? 0 : 1;
-      fill(
-         centerRow + fixedRow - o1,
-         centerCol + fixedCol - o2,
-         matrixId,
-         this.matrix[centerRow + fixedRow - o1][centerCol + fixedCol - o2]
-      );
+      fill(_row, _col, matrixId, this.matrix[_row][_col]);
 
-      const isBoundsExpanded =
-         fixedRow < this.minRecordedRow ||
-         fixedRow > this.maxRecordedRow ||
-         fixedCol < this.minRecordedCol ||
-         fixedCol > this.maxRecordedCol;
-      if (isBoundsExpanded) {
-         this._updateNonEmptyTotalSize();
-      }
-
-      this._recordRowAndColumn(fixedRow, fixedCol);
+      this._maybeUpdateNonEmptyTotalSize(_row, _col);
    }
 
-   private getOverlap(row: number, col: number) {
+   add(row: number, col: number, matrixId: string, trimIfNeeded = true) {
+      // Expand first if needed
+      const overlap = this._getOverlap(row, col);
+      if (overlap > 0) {
+         this._expand(overlap);
+      }
+
+      const [_row, _col] = this._getRealRowAndColumn(row, col);
+      this.matrix[_row][_col] = matrixId;
+
+      if (matrixId === this.emptyMatrixId && trimIfNeeded) {
+         this.trim();
+      }
+
+      this._maybeUpdateNonEmptyTotalSize(_row, _col);
+   }
+
+   private _getOverlap(row: number, col: number) {
       const fixedRow = row >= 0 ? row + 1 : row;
       const fixedCol = col >= 0 ? col + 1 : col;
-      const { top, bottom, left, right } = this.getBounds();
+      const { top, bottom, left, right } = this._getBounds();
 
       let overlapX = 0;
       let overlapY = 0;
@@ -269,40 +286,7 @@ export class MapMatrix {
       return Math.max(overlapX, overlapY);
    }
 
-   add(row: number, col: number, matrixId: string, trimIfNeeded = true) {
-      const fixedRow = row >= 0 ? row + 1 : row;
-      const fixedCol = col >= 0 ? col + 1 : col;
-
-      // Keep matrix perfectly square
-      const overlap = this.getOverlap(row, col);
-      this.expand(overlap);
-
-      // Put the matrix id by using the center as the origin
-      const centerRow = Math.ceil(this.matrix.length / 2);
-      const centerCol = Math.ceil((this.matrix[0]?.length || 0) / 2);
-      const o1 = fixedRow <= 0 ? 0 : 1; // offset
-      const o2 = fixedCol <= 0 ? 0 : 1;
-      this.matrix[centerRow + fixedRow - o1] ??= [];
-      this.matrix[centerRow + fixedRow - o1][centerCol + fixedCol - o2] =
-         matrixId;
-
-      const isBoundsExpanded =
-         fixedRow < this.minRecordedRow ||
-         fixedRow > this.maxRecordedRow ||
-         fixedCol < this.minRecordedCol ||
-         fixedCol > this.maxRecordedCol;
-      if (isBoundsExpanded) {
-         this._updateNonEmptyTotalSize();
-      }
-
-      if (matrixId === this.emptyMatrixId && trimIfNeeded) {
-         this.trim();
-      }
-
-      this._recordRowAndColumn(fixedRow, fixedCol);
-   }
-
-   private expand(size: number) {
+   private _expand(size: number) {
       if (!size) return;
 
       // expand rows
@@ -325,7 +309,7 @@ export class MapMatrix {
       });
    }
 
-   private translate(rowStep: number, colStep: number) {
+   private _translate(rowStep: number, colStep: number) {
       const rowStepAbs = Math.abs(rowStep);
       const colStepAbs = Math.abs(colStep);
 
@@ -366,10 +350,10 @@ export class MapMatrix {
 
    fromString(matrixStr: string) {
       this.matrix = matrixStr.split("\n").map((v) => v.split(this.separator));
-      this.clean();
+      this._clean();
    }
 
-   private clean() {
+   private _clean() {
       let maxRow = this.matrix.length;
       let maxCol = -Infinity;
       for (let i = this.matrix.length - 1; i >= 0; i--) {
