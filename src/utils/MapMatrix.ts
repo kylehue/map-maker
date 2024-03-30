@@ -305,16 +305,8 @@ export class MapMatrix {
    private expand(size: number) {
       if (!size) return;
 
-      // expand cols
-      this.matrix.forEach((v) => {
-         for (let i = 0; i < size; i++) {
-            v.unshift(this.emptyMatrixId);
-            v.push(this.emptyMatrixId);
-         }
-      });
-
       // expand rows
-      const targetLength = this.matrix.length + size;
+      const targetLength = this.matrix.length;
       for (let i = 0; i < size; i++) {
          this.matrix.unshift(
             Array.from({ length: targetLength }).map(() => this.emptyMatrixId)
@@ -323,6 +315,14 @@ export class MapMatrix {
             Array.from({ length: targetLength }).map(() => this.emptyMatrixId)
          );
       }
+
+      // expand cols
+      this.matrix.forEach((v) => {
+         for (let i = 0; i < size; i++) {
+            v.unshift(this.emptyMatrixId);
+            v.push(this.emptyMatrixId);
+         }
+      });
    }
 
    private translate(rowStep: number, colStep: number) {
