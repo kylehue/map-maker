@@ -98,6 +98,7 @@ export class Designer {
       });
 
       let lastTool: Tool | null = null;
+      let isSpacePressed = false;
       addEventListener("keydown", (e) => {
          if (
             e.code == "Space" &&
@@ -107,13 +108,18 @@ export class Designer {
             e.preventDefault();
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
+            isSpacePressed = true;
          }
          this.repaint();
       });
 
       addEventListener("keyup", () => {
-         if (lastTool) this.designerStore.setActiveTool(lastTool);
+         if (lastTool && isSpacePressed) {
+            this.designerStore.setActiveTool(lastTool);
+         }
+
          this.repaint();
+         isSpacePressed = false;
       });
 
       addEventListener("mousemove", (e) => {
