@@ -179,19 +179,24 @@ export class Designer {
       const material = this.projectStore.selectedMaterial;
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.add(row, col, material.getMatrixId());
-         this.projectStore.makeLayersMatrixSizeUniform();
-         this.repaint();
+         layer.matrix.add(row, col, material.getMatrixId()).then(() => {
+            this.projectStore.makeLayersMatrixSizeUniform();
+            this.repaint();
+         });
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
-         layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
-         this.projectStore.makeLayersMatrixSizeUniform();
-         this.repaint();
+         layer.matrix
+            .add(row, col, this.projectStore.emptyMatrixId)
+            .then(() => {
+               this.projectStore.makeLayersMatrixSizeUniform();
+               this.repaint();
+            });
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.fill(row, col, material.getMatrixId());
-         this.projectStore.makeLayersMatrixSizeUniform();
-         this.repaint();
+         layer.matrix.fill(row, col, material.getMatrixId()).then(() => {
+            this.projectStore.makeLayersMatrixSizeUniform();
+            this.repaint();
+         });
       }
    }
 
