@@ -109,8 +109,8 @@ export class Designer {
             lastTool = this.designerStore.activeTool;
             this.designerStore.setActiveTool("hand");
             isSpacePressed = true;
+            this.maybeRepaint();
          }
-         this.repaint();
       });
 
       addEventListener("keyup", () => {
