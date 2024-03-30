@@ -85,11 +85,7 @@ export const useProjectStore = defineStore("project", () => {
 
    function timeTravel(step: number) {
       if (!historyStates.length || !step) return;
-      const targetStateIndex = clamp(
-         historyStateIndex.value + step,
-         0,
-         historyStates.length - 1
-      );
+      const targetStateIndex = historyStateIndex.value + step;
 
       const operation = step < 0 ? "undo" : "redo";
       const stepDir = operation == "undo" ? -1 : 1;
@@ -99,7 +95,7 @@ export const useProjectStore = defineStore("project", () => {
             operation == "redo"
                ? historyStateIndex.value + 1
                : historyStateIndex.value;
-         operation == "redo" ? i <= targetStateIndex : i >= targetStateIndex;
+         operation == "redo" ? i <= targetStateIndex : i > targetStateIndex;
          i += stepDir
       ) {
          const state = historyStates[i];
@@ -113,7 +109,11 @@ export const useProjectStore = defineStore("project", () => {
          }
       }
 
-      historyStateIndex.value = targetStateIndex;
+      historyStateIndex.value = clamp(
+         targetStateIndex,
+         0,
+         historyStates.length - 1
+      );
    }
 
    function undoState() {
