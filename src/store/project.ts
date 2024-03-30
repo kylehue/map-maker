@@ -99,7 +99,7 @@ export const useProjectStore = defineStore("project", () => {
             operation == "redo"
                ? historyStateIndex.value + 1
                : historyStateIndex.value;
-         operation == "redo" ? i <= targetStateIndex : i > targetStateIndex;
+         operation == "redo" ? i <= targetStateIndex : i >= targetStateIndex;
          i += stepDir
       ) {
          const state = historyStates[i];
