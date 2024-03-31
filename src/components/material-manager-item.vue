@@ -123,7 +123,7 @@ import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { useProjectStore } from "../store/project";
 import { useMaterialSplitter } from "../composables/use-material-splitter";
 import { Material } from "../utils/Material";
-import { HistoryStateAction } from "../types";
+import { Layer } from "../types";
 
 const dialog = useDialog();
 const projectStore = useProjectStore();
@@ -261,17 +261,17 @@ async function handleMaterialChangeMatrixId() {
    if (oldMatrixId === newMatrixId) return;
 
    // Check if any layer is using this material
-   const materialLayerMatrixRows: string[][] = [];
+   const layersThatUseThisMaterial: Layer[] = [];
    for (const layer of projectStore.layers) {
       const matrix = layer.matrix.getMatrix();
       for (const row of matrix) {
          if (!row.some((v) => v === oldMatrixId)) continue;
-         materialLayerMatrixRows.push(row);
+         layersThatUseThisMaterial.push(layer);
       }
    }
 
    // If so, ask the user if they wanna change it in the matrix or not
-   const isIdBeingUsed = !!materialLayerMatrixRows.length;
+   const isIdBeingUsed = !!layersThatUseThisMaterial.length;
    let isReplaced = false;
    if (isIdBeingUsed) {
       await new Promise((resolve) => {
@@ -282,11 +282,8 @@ async function handleMaterialChangeMatrixId() {
             positiveText: "Replace",
             positiveButtonProps: { quaternary: true },
             onPositiveClick(e) {
-               for (const row of materialLayerMatrixRows) {
-                  for (let i = 0; i < row.length; i++) {
-                     if (row[i] !== oldMatrixId) continue;
-                     row[i] = newMatrixId;
-                  }
+               for (const layer of layersThatUseThisMaterial) {
+                  layer.matrix.replaceMatrixId(oldMatrixId, newMatrixId);
                }
                isReplaced = true;
                resolve(1);
@@ -311,11 +308,8 @@ async function handleMaterialChangeMatrixId() {
          materialComputedModels.matrixId.value = oldMatrixId;
          matrixId.value = oldMatrixId;
          if (isReplaced) {
-            for (const row of materialLayerMatrixRows) {
-               for (let i = 0; i < row.length; i++) {
-                  if (row[i] !== newMatrixId) continue;
-                  row[i] = oldMatrixId;
-               }
+            for (const layer of layersThatUseThisMaterial) {
+               layer.matrix.replaceMatrixId(newMatrixId, oldMatrixId);
             }
          }
       },
@@ -323,11 +317,8 @@ async function handleMaterialChangeMatrixId() {
          materialComputedModels.matrixId.value = newMatrixId;
          matrixId.value = newMatrixId;
          if (isReplaced) {
-            for (const row of materialLayerMatrixRows) {
-               for (let i = 0; i < row.length; i++) {
-                  if (row[i] !== oldMatrixId) continue;
-                  row[i] = newMatrixId;
-               }
+            for (const layer of layersThatUseThisMaterial) {
+               layer.matrix.replaceMatrixId(oldMatrixId, newMatrixId);
             }
          }
       }

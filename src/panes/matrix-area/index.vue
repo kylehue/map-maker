@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { useThemeVars } from "naive-ui";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import Navbar from "./navbar.vue";
 import { useProjectStore } from "../../store/project";
 import { useDesignerStore } from "../../store/designer";

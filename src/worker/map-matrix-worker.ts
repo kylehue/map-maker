@@ -10,6 +10,48 @@ function getOrSetMatrix(_matrix: string) {
    return newMatrix;
 }
 
+// TODO: delete unused function?
+function translate(
+   _matrix: string,
+   rowStep: number,
+   colStep: number,
+   emptyMatrixId = "."
+) {
+   const matrix = getOrSetMatrix(_matrix);
+   const rowStepAbs = Math.abs(rowStep);
+   const colStepAbs = Math.abs(colStep);
+
+   if (rowStepAbs === 0 && colStepAbs === 0) return;
+
+   const translated: string[][] = [];
+
+   for (let i = 0; i < matrix.length + rowStepAbs; i++) {
+      for (let j = 0; j < (matrix[0]?.length || 0) + colStepAbs; j++) {
+         translated[i] ??= [];
+         translated[i][j] = emptyMatrixId;
+      }
+   }
+
+   for (
+      let row = rowStep < 0 ? 0 : rowStepAbs;
+      row < translated.length - (rowStep >= 0 ? 0 : rowStepAbs);
+      row++
+   ) {
+      for (
+         let col = colStep < 0 ? 0 : colStepAbs;
+         col < translated[row].length - (colStep >= 0 ? 0 : colStepAbs);
+         col++
+      ) {
+         translated[row][col] =
+            matrix[row - (rowStep < 0 ? 0 : rowStepAbs)][
+               col - (colStep < 0 ? 0 : colStepAbs)
+            ];
+      }
+   }
+
+   return translated;
+}
+
 function getNonEmptyTotalSize(_matrix: string, emptyMatrixId = ".") {
    const matrix = getOrSetMatrix(_matrix);
 
@@ -160,12 +202,6 @@ function expand(_matrix: string, size: number, emptyMatrixId = ".") {
    return matrix;
 }
 
-function getRealRowAndColumn(_matrix: string, row: number, col: number) {
-   const matrix = getOrSetMatrix(_matrix);
-   const center = matrix.length / 2;
-   return [row + center, col + center];
-}
-
 function fill(
    _matrix: string,
    row: number,
@@ -179,43 +215,62 @@ function fill(
       expand(_matrix, overlap, emptyMatrixId);
    }
 
-   const [_row, _col] = getRealRowAndColumn(_matrix, row, col);
-
    const matrix = getOrSetMatrix(_matrix);
-   const fill = (
-      row: number,
-      col: number,
-      matrixId: string,
-      targetMatrixId: string
-   ) => {
-      // stop if out of bounds
+   const matrixCenter = matrix.length / 2;
+   const targetMatrixId = matrix[row + matrixCenter][col + matrixCenter];
+
+   const isValidCell = (row: number, col: number) => {
+      // get real position to 2d array
+      const _row = row + matrixCenter;
+      const _col = col + matrixCenter;
+
+      // invalid if it's outside array bounds
       if (
-         row < 0 ||
-         row >= matrix.length ||
-         col < 0 ||
-         col >= matrix[0].length
+         _row < 0 ||
+         _col < 0 ||
+         _row >= matrix.length ||
+         _col >= matrix.length
       ) {
-         return;
+         return false;
       }
 
-      // stop if the id is already set
-      if (matrix[row][col] === matrixId) {
-         return;
+      // invalid if the cell is already filled
+      if (matrix[_row][_col] === matrixId) {
+         return false;
       }
 
-      // stop if the current id is not equal to target id
-      if (targetMatrixId !== matrix[row][col]) {
-         return;
+      // invalid if the cell is not in the target "color"
+      if (targetMatrixId !== matrix[_row][_col]) {
+         return false;
       }
 
-      matrix[row][col] = matrixId;
-      fill(row + 1, col, matrixId, targetMatrixId);
-      fill(row - 1, col, matrixId, targetMatrixId);
-      fill(row, col + 1, matrixId, targetMatrixId);
-      fill(row, col - 1, matrixId, targetMatrixId);
+      return true;
    };
 
-   fill(_row, _col, matrixId, matrix[_row][_col]);
+   const stack: { row: number; col: number }[] = [];
+   stack.push({ row, col });
+   while (stack.length) {
+      const cell = stack.pop()!;
+
+      // get real position to 2d array
+      const _row = cell.row + matrixCenter;
+      const _col = cell.col + matrixCenter;
+
+      matrix[_row][_col] = matrixId;
+
+      if (isValidCell(cell.row + 1, cell.col)) {
+         stack.push({ row: cell.row + 1, col: cell.col });
+      }
+      if (isValidCell(cell.row - 1, cell.col)) {
+         stack.push({ row: cell.row - 1, col: cell.col });
+      }
+      if (isValidCell(cell.row, cell.col + 1)) {
+         stack.push({ row: cell.row, col: cell.col + 1 });
+      }
+      if (isValidCell(cell.row, cell.col - 1)) {
+         stack.push({ row: cell.row, col: cell.col - 1 });
+      }
+   }
 
    return matrix;
 }
@@ -233,7 +288,11 @@ function add(
       expand(_matrix, overlap, emptyMatrixId);
    }
 
-   const [_row, _col] = getRealRowAndColumn(_matrix, row, col);
+   // get real position to 2d array
+   const matrixCenter = matrix.length / 2;
+   const _row = row + matrixCenter;
+   const _col = col + matrixCenter;
+
    matrix[_row][_col] = matrixId;
 
    trim(_matrix, emptyMatrixId);
@@ -252,6 +311,67 @@ function updateMinSize(_matrix: string, minSize: number, emptyMatrixId = ".") {
             expand(_matrix, offset, emptyMatrixId);
          }
       }
+   }
+
+   return matrix;
+}
+
+function clean(_matrix: string, emptyMatrixId = ".") {
+   const matrix = getOrSetMatrix(_matrix);
+
+   let maxRow = matrix.length;
+   let maxCol = -Infinity;
+   for (let i = matrix.length - 1; i >= 0; i--) {
+      const row = matrix[i].filter(
+         (str) => typeof str == "string" && str.length
+      );
+      maxCol = Math.max(maxCol, row.length);
+   }
+
+   maxRow = Math.max(maxRow, 2);
+   maxCol = Math.max(maxCol, 2);
+   let maxLength = Math.max(maxRow, maxCol);
+
+   // Keep it even so that its position in designer can be consistent
+   if (maxLength % 2 != 0) {
+      maxLength++;
+   }
+
+   // Adjust matrix dimensions to make rows and columns equal
+   for (let i = 0; i < maxLength; i++) {
+      const row = (matrix[i] || []).filter(
+         (str) => typeof str == "string" && str.length
+      );
+      while (row.length < maxLength) {
+         row.push(emptyMatrixId);
+      }
+      matrix[i] = row;
+   }
+
+   trim(_matrix, emptyMatrixId);
+   return matrix;
+}
+
+function fromString(
+   _matrix: string,
+   matrixStr: string,
+   separator: string,
+   emptyMatrixId = "."
+) {
+   const matrixData = matrixStr.split("\n").map((v) => v.split(separator));
+   matrices.set(_matrix, matrixData);
+   clean(_matrix, emptyMatrixId);
+   return matrixData;
+}
+
+function replaceMatrixId(_matrix: string, from: string, to: string) {
+   const matrix = getOrSetMatrix(_matrix);
+
+   for (let i = matrix.length - 1; i >= 0; i--) {
+      matrix[i] = matrix[i].map((v) => {
+         if (v === from) return to;
+         return v;
+      });
    }
 
    return matrix;
@@ -299,6 +419,19 @@ self.onmessage = async (e) => {
          job.data.matrix,
          job.data.minSize,
          job.data.emptyMatrixId
+      );
+   } else if (job.name == "setMatrixFromString") {
+      resultToBeSent.data.matrix = fromString(
+         job.data.matrix,
+         job.data.matrixString,
+         job.data.separator,
+         job.data.emptyMatrixId
+      );
+   } else if (job.name == "setEmptyMatrixId" || job.name == "replaceMatrixId") {
+      resultToBeSent.data.matrix = replaceMatrixId(
+         job.data.matrix,
+         job.data.from,
+         job.data.to
       );
    }
 

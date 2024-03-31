@@ -37,13 +37,14 @@ export class MapMatrix {
       this.matrix = [];
    }
 
-   setEmptyMatrixId(emptyMatrixId: string) {
-      for (let i = this.matrix.length - 1; i >= 0; i--) {
-         this.matrix[i] = this.matrix[i].map((v) => {
-            if (v === this.emptyMatrixId) return emptyMatrixId;
-            return v;
-         });
-      }
+   async setEmptyMatrixId(emptyMatrixId: string) {
+      const result = await postAsync(worker, "setEmptyMatrixId", {
+         matrix: this.id,
+         from: this.emptyMatrixId,
+         to: emptyMatrixId,
+      });
+      if (!result) return;
+      this.matrix = result.data.matrix;
       this.emptyMatrixId = emptyMatrixId;
    }
 
@@ -60,6 +61,7 @@ export class MapMatrix {
    }
 
    private async _updateNonEmptyTotalSize() {
+      this.nonEmptyTotalSize = this.matrix.length;
       const result = await postAsync(worker, "getNonEmptyTotalSize", {
          matrix: this.id,
          emptyMatrixId: this.emptyMatrixId,
@@ -107,92 +109,29 @@ export class MapMatrix {
       this._updateNonEmptyTotalSize();
    }
 
-   private async _expand(size: number) {
-      if (!size) return;
-      const result = await postAsync(worker, "expand", {
+   toString() {
+      return this.matrix.map((v) => v.join(this.separator)).join("\n");
+   }
+
+   async fromString(matrixString: string) {
+      const result = await postAsync(worker, "setMatrixFromString", {
          matrix: this.id,
-         size,
+         matrixString,
+         separator: this.separator,
          emptyMatrixId: this.emptyMatrixId,
       });
       if (!result) return;
       this.matrix = result.data.matrix;
    }
 
-   private _translate(rowStep: number, colStep: number) {
-      const rowStepAbs = Math.abs(rowStep);
-      const colStepAbs = Math.abs(colStep);
-
-      if (rowStepAbs === 0 && colStepAbs === 0) return;
-
-      const translated: string[][] = [];
-
-      for (let i = 0; i < this.matrix.length + rowStepAbs; i++) {
-         for (let j = 0; j < (this.matrix[0]?.length || 0) + colStepAbs; j++) {
-            translated[i] ??= [];
-            translated[i][j] = this.emptyMatrixId;
-         }
-      }
-
-      for (
-         let row = rowStep < 0 ? 0 : rowStepAbs;
-         row < translated.length - (rowStep >= 0 ? 0 : rowStepAbs);
-         row++
-      ) {
-         for (
-            let col = colStep < 0 ? 0 : colStepAbs;
-            col < translated[row].length - (colStep >= 0 ? 0 : colStepAbs);
-            col++
-         ) {
-            translated[row][col] =
-               this.matrix[row - (rowStep < 0 ? 0 : rowStepAbs)][
-                  col - (colStep < 0 ? 0 : colStepAbs)
-               ];
-         }
-      }
-
-      this.matrix = translated;
-   }
-
-   toString() {
-      return this.matrix.map((v) => v.join(this.separator)).join("\n");
-   }
-
-   fromString(matrixStr: string) {
-      this.matrix = matrixStr.split("\n").map((v) => v.split(this.separator));
-      this._clean();
-   }
-
-   private _clean() {
-      let maxRow = this.matrix.length;
-      let maxCol = -Infinity;
-      for (let i = this.matrix.length - 1; i >= 0; i--) {
-         const row = this.matrix[i].filter(
-            (str) => typeof str == "string" && str.length
-         );
-         maxCol = Math.max(maxCol, row.length);
-      }
-
-      maxRow = Math.max(maxRow, 2);
-      maxCol = Math.max(maxCol, 2);
-      let maxLength = Math.max(maxRow, maxCol);
-
-      // Keep it even so that its position in designer can be consistent
-      if (maxLength % 2 != 0) {
-         maxLength++;
-      }
-
-      // Adjust matrix dimensions to make rows and columns equal
-      for (let i = 0; i < maxLength; i++) {
-         const row = (this.matrix[i] || []).filter(
-            (str) => typeof str == "string" && str.length
-         );
-         while (row.length < maxLength) {
-            row.push(this.emptyMatrixId);
-         }
-         this.matrix[i] = row;
-      }
-
-      this.trim();
+   async replaceMatrixId(from: string, to: string) {
+      const result = await postAsync(worker, "replaceMatrixId", {
+         matrix: this.id,
+         from,
+         to,
+      });
+      if (!result) return;
+      this.matrix = result.data.matrix;
    }
 }
 

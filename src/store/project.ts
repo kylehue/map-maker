@@ -140,15 +140,14 @@ export const useProjectStore = defineStore("project", () => {
 
    function makeLayersMatrixSizeUniform() {
       // should only take care of visible layers
-      if (_layers.filter((v) => v.isVisible).length <= 1) return;
+      const visibleLayers = _layers.filter((v) => v.isVisible);
+      if (visibleLayers.length <= 1) return;
 
-      const largestNonEmptyLayer = _layers
-         .filter((v) => v.isVisible)
-         .sort((a, b) => {
-            return (
-               b.matrix.getNonEmptyTotalSize() - a.matrix.getNonEmptyTotalSize()
-            );
-         })[0];
+      const largestNonEmptyLayer = visibleLayers.sort((a, b) => {
+         return (
+            b.matrix.getNonEmptyTotalSize() - a.matrix.getNonEmptyTotalSize()
+         );
+      })[0];
 
       const size = largestNonEmptyLayer.matrix.getNonEmptyTotalSize();
       for (const layer of _layers) {

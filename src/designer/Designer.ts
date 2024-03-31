@@ -170,7 +170,7 @@ export class Designer {
       this.lastRowSinceInitTooling = row;
    }
 
-   public initTooling() {
+   public async initTooling() {
       let [col, row] = this.getMouseColumnRow();
       const tool = this.designerStore.activeTool;
 
@@ -179,25 +179,17 @@ export class Designer {
       const material = this.projectStore.selectedMaterial;
       if (tool == "brush") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.add(row, col, material.getMatrixId()).then(() => {
-            this.projectStore.makeLayersMatrixSizeUniform();
-            this.repaint();
-         });
+         await layer.matrix.add(row, col, material.getMatrixId());
       } else if (tool == "eraser") {
          if (!layer || layer?.isLocked) return;
-         layer.matrix
-            .add(row, col, this.projectStore.emptyMatrixId)
-            .then(() => {
-               this.projectStore.makeLayersMatrixSizeUniform();
-               this.repaint();
-            });
+         await layer.matrix.add(row, col, this.projectStore.emptyMatrixId);
       } else if (tool == "paint-bucket") {
          if (!material || !layer || layer?.isLocked) return;
-         layer.matrix.fill(row, col, material.getMatrixId()).then(() => {
-            this.projectStore.makeLayersMatrixSizeUniform();
-            this.repaint();
-         });
+         await layer.matrix.fill(row, col, material.getMatrixId());
       }
+
+      this.projectStore.makeLayersMatrixSizeUniform();
+      this.repaint();
    }
 
    public setSize(width: number, height: number) {
