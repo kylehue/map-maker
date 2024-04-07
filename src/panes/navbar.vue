@@ -44,6 +44,7 @@ import { useSettingsStore } from "../store/settings";
 import { PhStackSimple } from "@phosphor-icons/vue";
 import { ProjectSaver } from "../utils/save";
 import { useDesignerStore } from "../store/designer";
+import { escapeRegex } from "../utils/escape-regex";
 
 enum Navigation {
    FILE_DROPDOWN,
@@ -356,19 +357,70 @@ function promptChangeEmptyMatrixId() {
 }
 
 function promptChangeMatrixSeparator() {
+   let newSep = projectStore.matrixSeparator;
    dialog.create({
-      title: "Change matrix separator",
+      title: "Change Matrix Separator",
       showIcon: false,
       content() {
-         return h("div", {}, [
-            h(NInput, {
-               "onUpdate:value": (n) => {
-                  if (!n) return;
-                  projectStore.setMatrixSeparator(n);
-               },
-               value: projectStore.matrixSeparator,
-            }),
-         ]);
+         return h(
+            "div",
+            {
+               class: "w-full flex flex-col items-end gap-2",
+            },
+            [
+               h(NInput, {
+                  "onUpdate:value": (n) => {
+                     newSep = n;
+                  },
+                  defaultValue: newSep,
+               }),
+               h(
+                  NButton,
+                  {
+                     type: "error",
+                     quaternary: true,
+                     async onClick(e) {
+                        let isInvalidSeparator = false;
+                        for (const material of projectStore.materials) {
+                           const matrixId = material.getMatrixId();
+                           if (matrixId.indexOf(newSep) !== -1) {
+                              isInvalidSeparator = true;
+                              break;
+                           }
+                        }
+
+                        let shouldChange = !isInvalidSeparator;
+                        if (isInvalidSeparator) {
+                           await new Promise((resolve) => {
+                              dialog.error({
+                                 title: "Change Matrix Separator",
+                                 content: `The separator you picked ('${newSep}') is currently being used by other materials. Do you want to change it anyway?`,
+                                 onAfterLeave() {
+                                    resolve(1);
+                                 },
+                                 positiveText: "Change all",
+                                 positiveButtonProps: {
+                                    type: "error",
+                                    quaternary: true,
+                                 },
+                                 onPositiveClick(e) {
+                                    shouldChange = true;
+                                    resolve(1);
+                                 },
+                              });
+                           });
+                        }
+
+                        if (shouldChange) {
+                           projectStore.setMatrixSeparator(newSep);
+                           dialog.destroyAll();
+                        }
+                     },
+                  },
+                  () => "Change"
+               ),
+            ]
+         );
       },
       autoFocus: true,
    });

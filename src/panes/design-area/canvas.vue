@@ -73,21 +73,30 @@ function handleCanvasMouseDown() {
    const tool = designerStore.activeTool;
    const layer = projectStore.selectedLayer;
    const material = projectStore.selectedMaterial;
-   if (
-      (tool == "brush" || tool == "eraser" || tool == "paint-bucket") &&
-      !layer
-   ) {
+   const isToolForEdit =
+      tool == "brush" || tool == "eraser" || tool == "paint-bucket";
+   if (!!layer && layer.isLocked && isToolForEdit) {
+      message.warning("This layer is locked!");
+   } else if (isToolForEdit && !layer) {
       message.warning("Please select a layer.");
    } else if ((tool == "brush" || tool == "paint-bucket") && !material) {
       message.warning("Please select a material.");
    }
 
    if (
-      !!layer &&
-      layer.isLocked &&
-      (tool == "brush" || tool == "eraser" || tool == "paint-bucket")
+      !!material &&
+      material.getMatrixId().indexOf(projectStore.matrixSeparator) !== -1 &&
+      isToolForEdit
    ) {
-      message.warning("This layer is locked!");
+      message.error(
+         `The material '${material.getName()}' has the matrix separator '${
+            projectStore.matrixSeparator
+         }' in its matrix id! Please modify its matrix id or change the matrix separator to avoid corrupt matrices.`,
+         {
+            closable: true,
+            duration: 1000 * 60,
+         }
+      );
    }
 }
 

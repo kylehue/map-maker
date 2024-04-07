@@ -16,6 +16,7 @@ import { cantor } from "../utils/cantor";
 import { Material } from "../utils/Material";
 import { useDesignerStore } from "./designer";
 import { useSettingsStore } from "./settings";
+import { escapeRegex } from "../utils/escape-regex";
 
 export const useProjectStore = defineStore("project", () => {
    const designerStore = useDesignerStore();
@@ -262,7 +263,20 @@ export const useProjectStore = defineStore("project", () => {
       const material = new Material();
       await material.getTexture().init(textureBase);
       material.setName(name);
-      material.setMatrixId(name);
+
+      // Create matrix id for the material (based on name)
+      // Make sure the matrix id doesn't contain the matrix separator
+      const separatorRegex = new RegExp(
+         escapeRegex(_matrixSeparator.value),
+         "g"
+      );
+      const separatorReplacement = _matrixSeparator.value === " " ? "-" : " ";
+      const assignedMatrixId = name.replace(
+         separatorRegex,
+         separatorReplacement
+      );
+      material.setMatrixId(assignedMatrixId);
+
       _materials.unshift(material);
       if (options.splitData) {
          material.setSplitData(options.splitData);
