@@ -82,7 +82,11 @@ function handleCanvasMouseDown() {
       message.warning("Please select a material.");
    }
 
-   if (layer?.isLocked) {
+   if (
+      !!layer &&
+      layer.isLocked &&
+      (tool == "brush" || tool == "eraser" || tool == "paint-bucket")
+   ) {
       message.warning("This layer is locked!");
    }
 }

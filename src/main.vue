@@ -1,6 +1,6 @@
 <template>
    <NConfigProvider :theme="themeToUse" :theme-overrides="themeOverrides">
-      <NMessageProvider :max="1">
+      <NMessageProvider :max="3">
          <NDialogProvider>
             <App></App>
          </NDialogProvider>
