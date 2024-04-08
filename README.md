@@ -3,7 +3,7 @@ A simple tool for creating 2D game maps 🌏
 
 [Go to app](https://kylehue.github.io/map-maker/)
 
-![Preview](https://raw.githubusercontent.com/kylehue/map-maker/public/preview.gif)
+![Preview](https://raw.githubusercontent.com/kylehue/map-maker/main/public/preview.gif)
 
 ## Features
 - Multi-layering
